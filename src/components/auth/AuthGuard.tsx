@@ -1,0 +1,24 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+
+type AuthGuardProps = {
+  children: React.ReactNode
+}
+
+export default async function AuthGuard({ children }: AuthGuardProps) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/signin')
+  }
+
+  // Always check for admin role - this system is admin-only
+  const userRole = user?.user_metadata?.role || user?.app_metadata?.role
+  
+  if (userRole !== 'admin') {
+    redirect('/signin?error=admin_required')
+  }
+
+  return <>{children}</>
+}
