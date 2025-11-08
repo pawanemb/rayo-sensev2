@@ -95,7 +95,6 @@ export default function SignInForm() {
                     type="email"
                     defaultValue={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    required
                   />
                 </div>
                 <div>
@@ -108,7 +107,6 @@ export default function SignInForm() {
                       placeholder="Enter your password"
                       defaultValue={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      required
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
