@@ -1,9 +1,7 @@
-import GridShape from "@/components/common/GridShape";
-import ThemeTogglerTwo from "@/components/common/ThemeTogglerTwo";
+"use client";
 
 import { ThemeProvider } from "@/context/ThemeContext";
 import Image from "next/image";
-import Link from "next/link";
 import React from "react";
 
 export default function AuthLayout({
@@ -12,31 +10,77 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative p-6 bg-white z-1 dark:bg-gray-900 sm:p-0">
+    <div className="relative p-6 bg-gradient-to-br from-[#F1E395]/5 to-[#5E33FF]/5 z-1 dark:bg-gray-900 sm:p-0">
       <ThemeProvider>
-        <div className="relative flex lg:flex-row w-full h-screen justify-center flex-col  dark:bg-gray-900 sm:p-0">
+        {/* Mobile floating orbs */}
+        <div className="lg:hidden absolute inset-0 overflow-hidden pointer-events-none">
+          <div
+            className="absolute w-[1000px] h-[1000px] rounded-full bg-gradient-to-r from-[#F1E395] to-[#8500FF] opacity-20 blur-3xl orb-animation-primary"
+            style={{ top: "-50%", left: "-50%" }}
+            aria-hidden
+          />
+          <div
+            className="absolute w-[900px] h-[900px] rounded-full bg-gradient-to-r from-[#5E33FF] to-[#FF5900] opacity-25 blur-3xl orb-animation-secondary"
+            style={{ bottom: "-50%", right: "-50%" }}
+            aria-hidden
+          />
+          <div
+            className="absolute w-[600px] h-[600px] rounded-full bg-gradient-to-bl from-[#F1E395] to-[#FF5900] opacity-30 blur-2xl orb-animation-tertiary"
+            style={{ top: "20%", right: "-20%" }}
+            aria-hidden
+          />
+          <div
+            className="absolute w-[700px] h-[700px] rounded-full bg-gradient-to-tr from-[#8500FF] to-[#FF5900] opacity-20 blur-3xl orb-animation-quaternary"
+            style={{ bottom: "20%", left: "-30%" }}
+            aria-hidden
+          />
+        </div>
+
+        <div className="relative flex lg:flex-row w-full h-screen justify-center flex-col dark:bg-gray-900 sm:p-0">
           {children}
-          <div className="lg:w-1/2 w-full h-full bg-brand-950 dark:bg-white/5 lg:grid items-center hidden">
-            <div className="relative items-center justify-center  flex z-1">
-              {/* <!-- ===== Common Grid Shape Start ===== --> */}
-              <GridShape />
-              <div className="flex flex-col items-center max-w-xs">
-                <Link href="/" className="block mb-4">
+          <div className="lg:w-1/2 w-full h-full lg:flex items-center hidden relative overflow-hidden bg-gradient-to-br from-[#F1E395]/5 to-[#5E33FF]/5">
+            {/* Desktop floating orbs */}
+            <div
+              className="absolute w-[1000px] h-[1000px] rounded-full bg-gradient-to-r from-[#F1E395] to-[#8500FF] opacity-20 blur-3xl orb-animation-primary"
+              style={{ top: "-50%", left: "-50%" }}
+              aria-hidden
+            />
+            <div
+              className="absolute w-[900px] h-[900px] rounded-full bg-gradient-to-r from-[#5E33FF] to-[#FF5900] opacity-25 blur-3xl orb-animation-secondary"
+              style={{ bottom: "-50%", right: "-50%" }}
+              aria-hidden
+            />
+            <div
+              className="absolute w-[600px] h-[600px] rounded-full bg-gradient-to-bl from-[#F1E395] to-[#FF5900] opacity-30 blur-2xl orb-animation-tertiary"
+              style={{ top: "20%", right: "-20%" }}
+              aria-hidden
+            />
+            <div
+              className="absolute w-[700px] h-[700px] rounded-full bg-gradient-to-tr from-[#8500FF] to-[#FF5900] opacity-20 blur-3xl orb-animation-quaternary"
+              style={{ bottom: "20%", left: "-30%" }}
+              aria-hidden
+            />
+
+            <div className="relative z-10 w-full px-12">
+              <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
+                <div className="mb-8 flex items-center justify-center gap-3">
                   <Image
-                    width={231}
-                    height={48}
-                    src="./images/logo/auth-logo.svg"
-                    alt="Logo"
+                    src="https://cdn.prod.website-files.com/67e0f66dad0b1753fb638de7/67e11cb513c05881cdeee857_Rayo%20Logo.svg"
+                    alt="Rayo Logo"
+                    width={300}
+                    height={70}
+                    priority
                   />
-                </Link>
-                <p className="text-center text-gray-400 dark:text-white/60">
-                  Free and Open-Source Tailwind CSS Admin Dashboard Template
+                </div>
+                <p className="text-xl mb-8 text-gray-600 dark:text-gray-200">
+                  Monitor and control your system with comprehensive logging and powerful analytics.
                 </p>
               </div>
             </div>
-          </div>
-          <div className="fixed bottom-6 right-6 z-50 hidden sm:block">
-            <ThemeTogglerTwo />
+
+            <div className="absolute bottom-8 left-0 w-full text-center text-gray-500 text-sm">
+              © 2025 Rayo. All rights reserved.
+            </div>
           </div>
         </div>
       </ThemeProvider>

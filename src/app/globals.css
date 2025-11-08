@@ -200,6 +200,82 @@
   @apply bg-brand-50 text-brand-500 dark:bg-brand-500/[0.12] dark:text-brand-400;
 }
 
+@keyframes orbFloatPrimary {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate3d(-100px, -100px, 0) scale(1.2) rotate(180deg);
+  }
+  66% {
+    transform: translate3d(100px, 100px, 0) scale(0.95) rotate(360deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.05) rotate(540deg);
+  }
+}
+
+@keyframes orbFloatSecondary {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1.1) rotate(360deg);
+  }
+  33% {
+    transform: translate3d(120px, 120px, 0) scale(0.9) rotate(180deg);
+  }
+  66% {
+    transform: translate3d(-120px, -120px, 0) scale(1.15) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.05) rotate(-180deg);
+  }
+}
+
+@keyframes orbFloatTertiary {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(80px, -80px, 0) scale(1.25) rotate(90deg);
+  }
+  66% {
+    transform: translate3d(-80px, 80px, 0) scale(0.85) rotate(270deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes orbFloatQuaternary {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.9) rotate(360deg);
+  }
+  33% {
+    transform: translate3d(-90px, 90px, 0) scale(1.1) rotate(180deg);
+  }
+  66% {
+    transform: translate3d(90px, -90px, 0) scale(0.95) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(0.9) rotate(-180deg);
+  }
+}
+
+.orb-animation-primary {
+  animation: orbFloatPrimary 24s ease-in-out infinite;
+}
+
+.orb-animation-secondary {
+  animation: orbFloatSecondary 28s ease-in-out infinite;
+}
+
+.orb-animation-tertiary {
+  animation: orbFloatTertiary 20s ease-in-out infinite;
+}
+
+.orb-animation-quaternary {
+  animation: orbFloatQuaternary 26s ease-in-out infinite;
+}
+
 @utility menu-item-inactive {
   @apply text-gray-700 hover:bg-gray-100 group-hover:text-gray-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-300;
 }
