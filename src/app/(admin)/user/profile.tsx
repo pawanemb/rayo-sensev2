@@ -30,11 +30,11 @@ export default function UserProfile({ userId, userData, userInformation, account
       {/* Projects */}
       <UserProjects userId={userId} projects={projects} totalProjects={totalProjects} />
 
-      {/* Blogs and Invoices */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <UserBlogs />
-        <UserInvoices />
-      </div>
+      {/* Blogs */}
+      <UserBlogs userId={userId} />
+
+      {/* Invoices */}
+      <UserInvoices />
     </div>
   );
 }
