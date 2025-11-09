@@ -47,7 +47,7 @@ export default function NotFound() {
           <div>
             <p className="text-xl md:text-xl lg:text-xl text-[rgba(24,34,52,0.65)] dark:text-gray-400 leading-relaxed max-w-2xl mx-auto font-sans">
               While Rayo is off auto-writing another 2,000-word masterpiece,
-              with <br /> live citations and zero hallucinations, you've landed
+              with <br /> live citations and zero hallucinations, you&apos;ve landed
               on a broken link.
             </p>
           </div>

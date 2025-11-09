@@ -39,8 +39,7 @@ export default function SignInForm() {
       }
 
       // Success - redirect to admin dashboard
-      router.push("/");
-      router.refresh();
+      window.location.href = "/";
     } catch (error) {
       setError("An unexpected error occurred");
       console.error("Sign in error:", error);
