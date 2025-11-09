@@ -22,6 +22,8 @@ export default function UserUsage({ userId }: UserUsageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUsageData, setSelectedUsageData] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [totalBaseCost, setTotalBaseCost] = useState(0);
+  const [totalActualCharge, setTotalActualCharge] = useState(0);
   const usagePerPage = 5;
 
   const fetchUsage = async (page: number = 1) => {
@@ -34,6 +36,8 @@ export default function UserUsage({ userId }: UserUsageProps) {
         setTotalUsage(data.totalUsage || 0);
         setCurrentPage(data.currentPage || 1);
         setTotalPages(data.totalPages || 1);
+        setTotalBaseCost(data.totalBaseCost || 0);
+        setTotalActualCharge(data.totalActualCharge || 0);
       }
     } catch (error) {
       console.error('Failed to fetch usage:', error);
@@ -89,13 +93,31 @@ export default function UserUsage({ userId }: UserUsageProps) {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div className="mb-6 flex items-center gap-3">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Usage History
-        </h2>
-        <span className="inline-flex items-center rounded-full bg-brand-100 px-3 py-1 text-sm font-medium text-brand-700 dark:bg-brand-900/30 dark:text-brand-400">
-          {totalUsage} {totalUsage === 1 ? 'Record' : 'Records'}
-        </span>
+      <div className="mb-6 flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Usage History
+          </h2>
+          <span className="inline-flex items-center rounded-full bg-brand-100 px-3 py-1 text-sm font-medium text-brand-700 dark:bg-brand-900/30 dark:text-brand-400">
+            {totalUsage} {totalUsage === 1 ? 'Record' : 'Records'}
+          </span>
+        </div>
+        {!isLoading && usage.length > 0 && (
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Total Base Cost:</span>
+              <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                {formatCurrency(totalBaseCost)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Total Actual Charge:</span>
+              <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                {formatCurrency(totalActualCharge)}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {isLoading ? (

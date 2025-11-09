@@ -34,11 +34,22 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch usage' }, { status: 500 });
     }
 
+    // Get totals for all records (not just current page)
+    const { data: allUsage } = await supabaseAdmin
+      .from('usage')
+      .select('base_cost, actual_charge')
+      .eq('user_id', resolvedParams.id);
+
+    const totalBaseCost = allUsage?.reduce((sum, record) => sum + (record.base_cost || 0), 0) || 0;
+    const totalActualCharge = allUsage?.reduce((sum, record) => sum + (record.actual_charge || 0), 0) || 0;
+
     return NextResponse.json({ 
       usage: usage || [],
       totalUsage: count || 0,
       currentPage: page,
-      totalPages: Math.ceil((count || 0) / limit)
+      totalPages: Math.ceil((count || 0) / limit),
+      totalBaseCost,
+      totalActualCharge
     });
   } catch (error) {
     console.error('Error fetching usage:', error);
