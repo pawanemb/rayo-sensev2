@@ -2,6 +2,10 @@
 
 import React, { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FaWordpress } from "react-icons/fa6";
+import { FcGoogle } from "react-icons/fc";
+import { RxCross2 } from "react-icons/rx";
+import { SiShopify } from "react-icons/si";
 
 interface ProjectRecord {
   id: string;
@@ -10,6 +14,11 @@ interface ProjectRecord {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  cms_config?: {
+    shopify?: { connected: boolean };
+    wordpress?: { connected: boolean };
+  } | null;
+  gsc_connected?: boolean;
 }
 
 interface UserProjectsProps {
@@ -50,8 +59,9 @@ export default function UserProjects({ userId, projects, totalProjects = 0 }: Us
         </div>
         <div className="space-y-3">
           {/* Table Header Skeleton */}
-          <div className="grid grid-cols-5 gap-4 border-b border-gray-200 pb-3 dark:border-gray-800">
+          <div className="grid grid-cols-6 gap-4 border-b border-gray-200 pb-3 dark:border-gray-800">
             <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-16" />
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-4 w-20" />
@@ -59,10 +69,11 @@ export default function UserProjects({ userId, projects, totalProjects = 0 }: Us
           </div>
           {/* Table Rows Skeleton */}
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="grid grid-cols-5 gap-4 border-b border-gray-100 py-3 dark:border-gray-800">
+            <div key={i} className="grid grid-cols-6 gap-4 border-b border-gray-100 py-3 dark:border-gray-800">
+              <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-6 w-16 rounded-full" />
-              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-16" />
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-4 w-24" />
             </div>
@@ -101,6 +112,38 @@ export default function UserProjects({ userId, projects, totalProjects = 0 }: Us
     );
   };
 
+  const getCMSIcons = (cmsConfig: ProjectRecord['cms_config'], gscConnected?: boolean) => {
+    const shopifyConnected = cmsConfig?.shopify?.connected;
+    const wordpressConnected = cmsConfig?.wordpress?.connected;
+    const hasAnyCMS = shopifyConnected || wordpressConnected;
+
+    return (
+      <div className="flex items-center gap-2">
+        {/* CMS Icon - Shopify, WordPress, or Cross */}
+        {shopifyConnected ? (
+          <div className="relative group" title="Shopify Connected">
+            <SiShopify className="h-5 w-5 text-[#96bf48]" />
+          </div>
+        ) : wordpressConnected ? (
+          <div className="relative group" title="WordPress Connected">
+            <FaWordpress className="h-5 w-5 text-[#21759b]" />
+          </div>
+        ) : (
+          <div className="relative group" title="No CMS Connected">
+            <RxCross2 className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+          </div>
+        )}
+
+        {/* GSC Icon - Only show if any CMS is connected */}
+        {hasAnyCMS && (
+          <div className="relative group" title={gscConnected ? "Google Search Console Connected" : "Google Search Console Not Connected"}>
+            <FcGoogle className={`h-5 w-5 ${!gscConnected && 'opacity-30 grayscale'}`} />
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const handlePageChange = async (page: number) => {
     if (page === currentPage || page < 1 || page > totalPages) return;
     
@@ -136,8 +179,9 @@ export default function UserProjects({ userId, projects, totalProjects = 0 }: Us
       {isLoading ? (
         <div className="space-y-3">
           {/* Table Header Skeleton */}
-          <div className="grid grid-cols-5 gap-4 border-b border-gray-200 pb-3 dark:border-gray-800">
+          <div className="grid grid-cols-6 gap-4 border-b border-gray-200 pb-3 dark:border-gray-800">
             <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-16" />
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-4 w-20" />
@@ -145,10 +189,11 @@ export default function UserProjects({ userId, projects, totalProjects = 0 }: Us
           </div>
           {/* Table Rows Skeleton */}
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="grid grid-cols-5 gap-4 border-b border-gray-100 py-3 dark:border-gray-800">
+            <div key={i} className="grid grid-cols-6 gap-4 border-b border-gray-100 py-3 dark:border-gray-800">
+              <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-6 w-16 rounded-full" />
-              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-16" />
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-4 w-24" />
             </div>
@@ -169,6 +214,9 @@ export default function UserProjects({ userId, projects, totalProjects = 0 }: Us
                   </th>
                   <th className="pb-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
                     Project ID
+                  </th>
+                  <th className="pb-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                    CMS
                   </th>
                   <th className="pb-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
                     Status
@@ -238,6 +286,9 @@ export default function UserProjects({ userId, projects, totalProjects = 0 }: Us
                             )}
                           </button>
                         </div>
+                      </td>
+                      <td className="py-3">
+                        {getCMSIcons(project.cms_config, project.gsc_connected)}
                       </td>
                       <td className="py-3">
                         {getStatusBadge(project.is_active)}

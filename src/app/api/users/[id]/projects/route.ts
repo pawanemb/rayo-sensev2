@@ -24,8 +24,31 @@ export async function GET(
 
     if (projectsError) throw projectsError;
 
+    // Get GSC connection status for all projects
+    const projectIds = (projects || []).map(p => p.id);
+    const gscMap = new Map();
+    
+    if (projectIds.length > 0) {
+      const { data: gscAccounts } = await supabaseAdmin
+        .from('gsc_accounts')
+        .select('project_id')
+        .in('project_id', projectIds);
+      
+      if (gscAccounts) {
+        gscAccounts.forEach(account => {
+          gscMap.set(account.project_id, true);
+        });
+      }
+    }
+
+    // Attach GSC status to projects
+    const projectsWithGSC = (projects || []).map(project => ({
+      ...project,
+      gsc_connected: gscMap.get(project.id) || false,
+    }));
+
     return NextResponse.json({ 
-      projects: projects || []
+      projects: projectsWithGSC
     });
   } catch (error) {
     return handleApiError(error);
