@@ -65,7 +65,7 @@ export default function AuthLayout({
               <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
                 <div className="mb-8 flex items-center justify-center gap-3">
                   <Image
-                    src="https://cdn.prod.website-files.com/67e0f66dad0b1753fb638de7/67e11cb513c05881cdeee857_Rayo%20Logo.svg"
+                    src="https://cdn.rayo.work/Rayo_assests/logo.svg"
                     alt="Rayo Logo"
                     width={300}
                     height={70}

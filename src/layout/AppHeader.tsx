@@ -85,17 +85,18 @@ const AppHeader: React.FC = () => {
 
           <Link href="/" className="lg:hidden">
             <Image
-              width={154}
+              width={120}
               height={32}
               className="dark:hidden"
-              src="./images/logo/logo.svg"
+              src="https://cdn.rayo.work/Rayo_assests/logo.svg"
               alt="Logo"
+              
             />
             <Image
               width={154}
               height={32}
               className="hidden dark:block"
-              src="./images/logo/logo-dark.svg"
+              src="https://cdn.rayo.work/Rayo_assests/logo-dark_ekilwn.svg"
               alt="Logo"
             />
           </Link>

@@ -65,7 +65,7 @@ export default function SignInForm() {
           {/* Mobile logo */}
           <div className="lg:hidden flex justify-center mb-6">
             <Image
-              src="https://cdn.prod.website-files.com/67e0f66dad0b1753fb638de7/67e11cb513c05881cdeee857_Rayo%20Logo.svg"
+              src="https://cdn.rayo.work/Rayo_assests/logo.svg"
               alt="Rayo Logo"
               width={160}
               height={40}

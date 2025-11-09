@@ -30,7 +30,14 @@ const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    subItems: [
+      { name: "Overview", path: "/", pro: false },
+    ],
+  },
+  {
+    icon: <UserCircleIcon />,
+    name: "Users",
+    path: "/user/overview",
   },
   {
     icon: <CalenderIcon />,
@@ -313,22 +320,23 @@ const AppSidebar: React.FC = () => {
             <>
               <Image
                 className="dark:hidden"
-                src="/images/logo/logo.svg"
+                src="https://cdn.rayo.work/Rayo_assests/logo.svg"
                 alt="Logo"
-                width={150}
-                height={40}
+                width={120}
+                height={32}
+
               />
               <Image
                 className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
+                src="https://cdn.rayo.work/Rayo_assests/logo-dark_ekilwn.svg"
                 alt="Logo"
-                width={150}
-                height={40}
+                width={120}
+                height={32}
               />
             </>
           ) : (
             <Image
-              src="/images/logo/logo-icon.svg"
+              src="https://cdn.rayo.work/Rayo_assests/Star_logo.svg"
               alt="Logo"
               width={32}
               height={32}
