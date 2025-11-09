@@ -198,29 +198,38 @@ export default function ProjectsPage() {
   const getCMSIcons = (cmsConfig: Project['cms_config'], gscConnected?: boolean) => {
     const shopifyConnected = cmsConfig?.shopify?.connected;
     const wordpressConnected = cmsConfig?.wordpress?.connected;
-    const hasAnyCMS = shopifyConnected || wordpressConnected;
+    const hasAnyConnection = shopifyConnected || wordpressConnected || gscConnected;
 
+    // If nothing is connected, show cross
+    if (!hasAnyConnection) {
+      return (
+        <div className="relative group" title="No Connections">
+          <RxCross2 className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+        </div>
+      );
+    }
+
+    // Show icons for whatever is connected
     return (
       <div className="flex items-center gap-2">
-        {/* CMS Icon - Shopify, WordPress, or Cross */}
-        {shopifyConnected ? (
+        {/* Shopify Icon */}
+        {shopifyConnected && (
           <div className="relative group" title="Shopify Connected">
             <SiShopify className="h-5 w-5 text-[#96bf48]" />
           </div>
-        ) : wordpressConnected ? (
+        )}
+
+        {/* WordPress Icon */}
+        {wordpressConnected && (
           <div className="relative group" title="WordPress Connected">
             <FaWordpress className="h-5 w-5 text-[#21759b]" />
           </div>
-        ) : (
-          <div className="relative group" title="No CMS Connected">
-            <RxCross2 className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-          </div>
         )}
 
-        {/* GSC Icon - Only show if any CMS is connected */}
-        {hasAnyCMS && (
-          <div className="relative group" title={gscConnected ? "Google Search Console Connected" : "Google Search Console Not Connected"}>
-            <FcGoogle className={`h-5 w-5 ${!gscConnected && 'opacity-30 grayscale'}`} />
+        {/* GSC Icon */}
+        {gscConnected && (
+          <div className="relative group" title="Google Search Console Connected">
+            <FcGoogle className="h-5 w-5" />
           </div>
         )}
       </div>

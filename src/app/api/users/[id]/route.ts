@@ -48,10 +48,33 @@ export async function GET(
       .order('created_at', { ascending: false })
       .range(0, 4); // First 5 projects
 
+    // Get GSC connection status for projects
+    const projectIds = (projects || []).map(p => p.id);
+    const gscMap = new Map();
+    
+    if (projectIds.length > 0) {
+      const { data: gscAccounts } = await supabaseAdmin
+        .from('gsc_accounts')
+        .select('project_id')
+        .in('project_id', projectIds);
+      
+      if (gscAccounts) {
+        gscAccounts.forEach(account => {
+          gscMap.set(account.project_id, true);
+        });
+      }
+    }
+
+    // Attach GSC status to projects
+    const projectsWithGSC = (projects || []).map(project => ({
+      ...project,
+      gsc_connected: gscMap.get(project.id) || false,
+    }));
+
     // Don't throw error if tables don't exist, just return null
     const additionalInfo = userInfoError ? null : userInfo;
     const billingInfo = accountError ? null : accountInfo;
-    const projectsInfo = projectsError ? [] : projects;
+    const projectsInfo = projectsError ? [] : projectsWithGSC;
 
     return NextResponse.json({ 
       user: normalizeUser(data.user),
