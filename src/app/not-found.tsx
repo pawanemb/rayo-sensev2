@@ -1,47 +1,71 @@
-import GridShape from "@/components/common/GridShape";
-import Image from "next/image";
+"use client";
+
 import Link from "next/link";
-import React from "react";
+import { useEffect } from "react";
 
 export default function NotFound() {
+  useEffect(() => {
+    // Update page metadata
+    document.title = "404 - Page Not Found | Rayo";
+
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute(
+        "content",
+        "The page you are looking for could not be found. Return to Rayo to continue exploring our revolutionary AI content generator."
+      );
+    }
+
+    // Update robots meta
+    const metaRobots = document.querySelector('meta[name="robots"]');
+    if (metaRobots) {
+      metaRobots.setAttribute("content", "noindex, follow");
+    }
+  }, []);
+
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen p-6 overflow-hidden z-1">
-      <GridShape />
-      <div className="mx-auto w-full max-w-[242px] text-center sm:max-w-[472px]">
-        <h1 className="mb-8 font-bold text-gray-800 text-title-md dark:text-white/90 xl:text-title-2xl">
-          ERROR
-        </h1>
+    <main className="min-h-screen bg-white dark:bg-gray-900 relative overflow-hidden flex items-center justify-center">
+      {/* Main Content */}
+      <div className="relative z-10 w-full max-w-4xl mx-auto px-4 md:px-6 text-center">
+        <div className="space-y-8">
+          {/* 404 Number */}
+          <div>
+            <div className="font-sans font-bold text-[200px] leading-none tracking-[-0.06em] text-center text-gray-900 dark:text-white">
+              404
+            </div>
+          </div>
 
-        <Image
-          src="/images/error/404.svg"
-          alt="404"
-          className="dark:hidden"
-          width={472}
-          height={152}
-        />
-        <Image
-          src="/images/error/404-dark.svg"
-          alt="404"
-          className="hidden dark:block"
-          width={472}
-          height={152}
-        />
+          {/* Title */}
+          <div>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#232F45] dark:text-white mb-4 font-sans">
+              Page Not Found
+            </h1>
+          </div>
 
-        <p className="mt-10 mb-6 text-base text-gray-700 dark:text-gray-400 sm:text-lg">
-          We can’t seem to find the page you are looking for!
-        </p>
+          {/* Subtitle */}
+          <div>
+            <p className="text-xl md:text-xl lg:text-xl text-[rgba(24,34,52,0.65)] dark:text-gray-400 leading-relaxed max-w-2xl mx-auto font-sans">
+              While Rayo is off auto-writing another 2,000-word masterpiece,
+              with <br /> live citations and zero hallucinations, you've landed
+              on a broken link.
+            </p>
+          </div>
 
-        <Link
-          href="/"
-          className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-3.5 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
-        >
-          Back to Home Page
-        </Link>
+          {/* CTA Button */}
+          <div className="flex justify-center pt-4">
+            <Link
+              href="/"
+              className="bg-[#5E33FF] hover:bg-[#4D2BD9] text-white px-8 py-4 rounded-full text-xl font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-xl font-sans"
+            >
+              Back to Homepage
+            </Link>
+          </div>
+        </div>
       </div>
-      {/* <!-- Footer --> */}
-      <p className="absolute text-sm text-center text-gray-500 -translate-x-1/2 bottom-6 left-1/2 dark:text-gray-400">
-        &copy; {new Date().getFullYear()} - Rayo
-      </p>
-    </div>
+
+      {/* Bottom decorative elements */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white dark:from-gray-900 to-transparent pointer-events-none" />
+    </main>
   );
 }
