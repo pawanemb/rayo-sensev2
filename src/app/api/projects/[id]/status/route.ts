@@ -1,0 +1,36 @@
+import { NextRequest, NextResponse } from "next/server";
+import { handleApiError, requireAdmin } from "@/lib/auth/requireAdmin";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await requireAdmin();
+    
+    const { id } = params;
+    const { is_active } = await request.json();
+
+    // Update project status
+    const { data, error } = await supabaseAdmin
+      .from('projects')
+      .update({ is_active, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase error:', error);
+      throw new Error(`Failed to update project status: ${error.message}`);
+    }
+
+    return NextResponse.json({
+      success: true,
+      project: data,
+      message: `Project ${is_active ? 'activated' : 'deactivated'} successfully`,
+    });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
