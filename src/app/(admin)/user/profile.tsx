@@ -9,12 +9,39 @@ import UserInvoices from "@/components/user-profile/UserInvoices";
 import UserUsage from "@/components/user-profile/UserUsage";
 import type { User } from "@/services/userService";
 
+interface UserInformation {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  role: string;
+  status: string;
+  created_at: string;
+  last_sign_in_at: string;
+}
+
+interface AccountInformation {
+  balance: number;
+  total_spent: number;
+  payment_method?: string;
+  billing_address?: string;
+}
+
+interface ProjectRecord {
+  id: string;
+  name: string;
+  url: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 interface UserProfileProps {
   userId: string;
   userData?: User;
-  userInformation?: any;
-  accountInformation?: any;
-  projects?: any[];
+  userInformation?: UserInformation;
+  accountInformation?: AccountInformation;
+  projects?: ProjectRecord[];
   totalProjects?: number;
   onUserUpdated?: () => void;
 }

@@ -67,7 +67,8 @@ export async function GET(request: NextRequest) {
     // If search is provided, we need to fetch all users and filter
     if (search) {
       // Fetch all users for search
-      let allUsers: any[] = [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const allUsers: any[] = [];
       let currentPage = 1;
       const fetchPerPage = 1000;
       

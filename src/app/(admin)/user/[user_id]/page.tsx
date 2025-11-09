@@ -3,15 +3,42 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import UserProfile from "../profile";
-import { getUserById, type User } from "@/services/userService";
+import { type User } from "@/services/userService";
+
+interface UserInformation {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  role: string;
+  status: string;
+  created_at: string;
+  last_sign_in_at: string;
+}
+
+interface AccountInformation {
+  balance: number;
+  total_spent: number;
+  payment_method?: string;
+  billing_address?: string;
+}
+
+interface ProjectRecord {
+  id: string;
+  name: string;
+  url: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 export default function UserProfilePage() {
   const params = useParams();
   const user_id = params.user_id as string;
   const [userData, setUserData] = useState<User | undefined>(undefined);
-  const [userInformation, setUserInformation] = useState<any>(null);
-  const [accountInformation, setAccountInformation] = useState<any>(null);
-  const [projects, setProjects] = useState<any[]>([]);
+  const [userInformation, setUserInformation] = useState<UserInformation | null>(null);
+  const [accountInformation, setAccountInformation] = useState<AccountInformation | null>(null);
+  const [projects, setProjects] = useState<ProjectRecord[]>([]);
   const [totalProjects, setTotalProjects] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -51,5 +78,5 @@ export default function UserProfilePage() {
     return <UserProfile userId={user_id} userData={undefined} />;
   }
 
-  return <UserProfile userId={user_id} userData={userData} userInformation={userInformation} accountInformation={accountInformation} projects={projects} totalProjects={totalProjects} onUserUpdated={handleUserUpdated} />;
+  return <UserProfile userId={user_id} userData={userData} userInformation={userInformation || undefined} accountInformation={accountInformation || undefined} projects={projects} totalProjects={totalProjects} onUserUpdated={handleUserUpdated} />;
 }
