@@ -5,9 +5,9 @@ import { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Next.js Alerts | Rayo - Next.js Dashboard Template",
+  title: "Rayo Alerts ",
   description:
-    "This is Next.js Alerts page for Rayo - Next.js Tailwind CSS Admin Dashboard Template",
+    "This is Rayo Alerts page for Rayo - Rayo Tailwind CSS Admin ",
   // other metadata
 };
 

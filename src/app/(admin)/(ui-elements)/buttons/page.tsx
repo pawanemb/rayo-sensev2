@@ -6,9 +6,9 @@ import { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Next.js Buttons | Rayo - Next.js Dashboard Template",
+  title: "Rayo Buttons ",
   description:
-    "This is Next.js Buttons page for Rayo - Next.js Tailwind CSS Admin Dashboard Template",
+    "This is Rayo Buttons page for Rayo - Rayo Tailwind CSS Admin ",
 };
 
 export default function Buttons() {

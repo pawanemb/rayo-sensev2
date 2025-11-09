@@ -9,8 +9,8 @@ import DemographicCard from "@/components/ecommerce/DemographicCard";
 
 export const metadata: Metadata = {
   title:
-    "Next.js E-commerce Dashboard | Rayo - Next.js Dashboard Template",
-  description: "This is Next.js Home for Rayo Dashboard Template",
+    "Rayo E-commerce Dashboard ",
+  description: "This is Rayo Home for Rayo ",
 };
 
 export default function Ecommerce() {

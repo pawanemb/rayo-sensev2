@@ -5,9 +5,9 @@ import Link from "next/link";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Next.js Error 404 | Rayo - Next.js Dashboard Template",
+  title: "Rayo Error 404 ",
   description:
-    "This is Next.js Error 404 page for Rayo - Next.js Tailwind CSS Admin Dashboard Template",
+    "This is Rayo Error 404 page for Rayo - Rayo Tailwind CSS Admin ",
 };
 
 export default function Error404() {
