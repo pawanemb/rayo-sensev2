@@ -10,12 +10,26 @@ import {
   ModalFooter,
 } from "@/components/ui/modal";
 
+interface UsageRecord {
+  id: string;
+  service_name: string;
+  base_cost: number;
+  actual_charge: number;
+  multiplier: number;
+  created_at: string;
+  usage_data?: string;
+  projects?: {
+    name: string;
+    url: string;
+  };
+}
+
 interface UserUsageProps {
   userId: string;
 }
 
 export default function UserUsage({ userId }: UserUsageProps) {
-  const [usage, setUsage] = useState<any[]>([]);
+  const [usage, setUsage] = useState<UsageRecord[]>([]);
   const [totalUsage, setTotalUsage] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -48,6 +62,7 @@ export default function UserUsage({ userId }: UserUsageProps) {
 
   useEffect(() => {
     fetchUsage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const formatDate = (dateString?: string | null) => {
@@ -70,20 +85,6 @@ export default function UserUsage({ userId }: UserUsageProps) {
       style: 'currency',
       currency: 'USD'
     }).format(amount);
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusColors: Record<string, string> = {
-      completed: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400',
-      pending: 'bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400',
-      failed: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
-    };
-    
-    return (
-      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[status] || statusColors.completed}`}>
-        {status?.toUpperCase() || 'COMPLETED'}
-      </span>
-    );
   };
 
   const handlePageChange = (page: number) => {
@@ -191,6 +192,7 @@ export default function UserUsage({ userId }: UserUsageProps) {
                       {record.projects ? (
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 min-w-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img 
                               src={`https://www.google.com/s2/favicons?domain=${new URL(record.projects.url).hostname}&sz=16`}
                               alt="" 
@@ -234,7 +236,7 @@ export default function UserUsage({ userId }: UserUsageProps) {
                       {record.usage_data ? (
                         <button
                           onClick={() => {
-                            setSelectedUsageData(record.usage_data);
+                            setSelectedUsageData(record.usage_data || null);
                             setIsModalOpen(true);
                           }}
                           className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
