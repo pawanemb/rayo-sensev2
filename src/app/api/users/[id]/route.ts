@@ -10,6 +10,8 @@ export async function GET(
   try {
     await requireAdmin();
     const resolvedParams = await params;
+    
+    // Get user from auth
     const { data, error } = await supabaseAdmin.auth.admin.getUserById(
       resolvedParams.id
     );
@@ -18,7 +20,46 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ user: normalizeUser(data.user) });
+    // Get additional user information from user_information table
+    const { data: userInfo, error: userInfoError } = await supabaseAdmin
+      .from('user_information')
+      .select('*')
+      .eq('user_id', resolvedParams.id)
+      .single();
+
+    // Get account/billing information from accounts table
+    const { data: accountInfo, error: accountError } = await supabaseAdmin
+      .from('accounts')
+      .select('*')
+      .eq('user_id', resolvedParams.id)
+      .single();
+
+    // Get total count of user's projects
+    const { count: totalProjects } = await supabaseAdmin
+      .from('projects')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', resolvedParams.id);
+
+    // Get user's projects from projects table (first 5 for initial load)
+    const { data: projects, error: projectsError } = await supabaseAdmin
+      .from('projects')
+      .select('*')
+      .eq('user_id', resolvedParams.id)
+      .order('created_at', { ascending: false })
+      .range(0, 4); // First 5 projects
+
+    // Don't throw error if tables don't exist, just return null
+    const additionalInfo = userInfoError ? null : userInfo;
+    const billingInfo = accountError ? null : accountInfo;
+    const projectsInfo = projectsError ? [] : projects;
+
+    return NextResponse.json({ 
+      user: normalizeUser(data.user),
+      userInformation: additionalInfo,
+      accountInformation: billingInfo,
+      projects: projectsInfo,
+      totalProjects: totalProjects || 0
+    });
   } catch (error) {
     return handleApiError(error);
   }

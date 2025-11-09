@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { FaPen, FaLinkedin, FaCopy } from "react-icons/fa";
 import { MdDelete, MdEmail } from "react-icons/md";
 import { FcGoogle } from "react-icons/fc";
@@ -50,6 +51,7 @@ const formatDateTime = (value?: string | null) => {
 };
 
 export default function UserList() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({
     currentPage: 1,
@@ -269,7 +271,11 @@ export default function UserList() {
                       user.raw.app_metadata?.providers ||
                       (user.raw.app_metadata?.provider ? [user.raw.app_metadata.provider] : []);
                     return (
-                      <TableRow key={user.id}>
+                      <TableRow 
+                        key={user.id}
+                        onClick={() => router.push(`/user/${user.id}`)}
+                        className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                      >
                         <TableCell className="px-5 py-4">
                           <div className="flex items-center gap-3">
                             <div className="relative h-10 w-10 overflow-hidden rounded-full border border-gray-100 dark:border-gray-700">
@@ -321,16 +327,22 @@ export default function UserList() {
                           {formatDateTime(user.raw.created_at)}
                         </TableCell>
                         <TableCell className="px-5 py-4">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             <button
-                              onClick={() => setUserToEdit(user)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setUserToEdit(user);
+                              }}
                               className="rounded-full border border-gray-200 p-2 text-gray-500 hover:border-brand-200 hover:text-brand-600 dark:border-gray-700 dark:text-gray-300"
                               title="Edit user"
                             >
                               <FaPen className="h-3.5 w-3.5" />
                             </button>
                             <button
-                              onClick={() => setUserToDelete(user)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setUserToDelete(user);
+                              }}
                               className="rounded-full border border-gray-200 p-2 text-gray-500 hover:border-error-200 hover:text-error-600 dark:border-gray-700 dark:text-gray-300"
                               title="Delete user"
                             >

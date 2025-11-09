@@ -76,7 +76,12 @@ export const getUsers = async (params: GetUsersParams = {}): Promise<UserListRes
 };
 
 export const getUserById = async (id: string): Promise<User> => {
-  const response = await fetch(`/api/users/${id}`, {
+  // Check if we're on the server or client
+  const baseUrl = typeof window === 'undefined' 
+    ? process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    : '';
+  
+  const response = await fetch(`${baseUrl}/api/users/${id}`, {
     cache: "no-store",
   });
 
