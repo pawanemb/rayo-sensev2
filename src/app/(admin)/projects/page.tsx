@@ -149,11 +149,6 @@ export default function ProjectsPage() {
   );
 
   useEffect(() => {
-    fetchProjects(1, "", pagination.limit);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
     const handle = setTimeout(() => {
       setSearchTerm(searchInput);
       fetchProjects(1, searchInput, pagination.limit);

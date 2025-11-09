@@ -100,11 +100,6 @@ export default function UserList() {
   );
 
   useEffect(() => {
-    fetchUsers(1, "", pagination.limit);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run on mount
-
-  useEffect(() => {
     const handle = setTimeout(() => {
       setSearchTerm(searchInput);
       fetchUsers(1, searchInput, pagination.limit);
