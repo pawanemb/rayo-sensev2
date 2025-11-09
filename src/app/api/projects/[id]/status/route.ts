@@ -4,12 +4,13 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAdmin();
     
-    const { id } = params;
+    const resolvedParams = await params;
+    const { id } = resolvedParams;
     const { is_active } = await request.json();
 
     // Update project status
