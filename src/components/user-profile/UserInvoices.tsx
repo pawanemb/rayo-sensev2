@@ -3,12 +3,25 @@
 import React, { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+interface InvoiceRecord {
+  id: string;
+  invoice_number: string;
+  client_name: string;
+  client_email?: string;
+  status: string;
+  total: number;
+  currency: string;
+  amount_paid: number;
+  issue_date: string;
+  due_date: string;
+}
+
 interface UserInvoicesProps {
   userId: string;
 }
 
 export default function UserInvoices({ userId }: UserInvoicesProps) {
-  const [invoices, setInvoices] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
   const [totalInvoices, setTotalInvoices] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -35,6 +48,7 @@ export default function UserInvoices({ userId }: UserInvoicesProps) {
 
   useEffect(() => {
     fetchInvoices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const formatDate = (dateString?: string | null) => {

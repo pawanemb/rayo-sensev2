@@ -3,16 +3,25 @@
 import React, { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+interface ProjectRecord {
+  id: string;
+  name: string;
+  url: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 interface UserProjectsProps {
   userId: string;
-  projects?: any[];
+  projects?: ProjectRecord[];
   totalProjects?: number;
 }
 
 export default function UserProjects({ userId, projects, totalProjects = 0 }: UserProjectsProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentProjects, setCurrentProjects] = useState<any[]>(projects || []);
+  const [currentProjects, setCurrentProjects] = useState<ProjectRecord[]>(projects || []);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const projectsPerPage = 5;
   const totalPages = Math.ceil(totalProjects / projectsPerPage);
@@ -184,6 +193,7 @@ export default function UserProjects({ userId, projects, totalProjects = 0 }: Us
                     >
                       <td className="py-3">
                         <div className="flex items-start gap-3">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img 
                             src={faviconUrl} 
                             alt="" 

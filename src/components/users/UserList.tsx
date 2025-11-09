@@ -206,7 +206,7 @@ export default function UserList() {
           </h1>
           {searchTerm && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Search results for "{searchTerm}"
+              Search results for &quot;{searchTerm}&quot;
             </p>
           )}
         </div>

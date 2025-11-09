@@ -44,7 +44,7 @@ To get started with Rayo, ensure you have the following prerequisites installed 
 Clone the repository using the following command:
 
 ```bash
-git clone https://github.com/Rayo/free-nextjs-admin-dashboard.git
+git clone https://github.com/Rayo/rayo-sense.git
 ```
 
 > Windows Users: place the repository near the root of your drive if you face issues while cloning.
