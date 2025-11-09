@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     // Add search filter if provided
     if (search) {
-      query = query.or(`name.ilike.%${search}%,url.ilike.%${search}%,id.ilike.%${search}%`);
+      query = query.or(`name.ilike.%${search}%,url.ilike.%${search}%`);
     }
 
     // Apply pagination and sorting
@@ -66,7 +66,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Attach user data to projects
+    // Get GSC connection status for all projects
+    const projectIds = (projects || []).map(p => p.id);
+    const gscMap = new Map();
+    
+    if (projectIds.length > 0) {
+      const { data: gscAccounts } = await supabaseAdmin
+        .from('gsc_accounts')
+        .select('project_id')
+        .in('project_id', projectIds);
+      
+      if (gscAccounts) {
+        gscAccounts.forEach(account => {
+          gscMap.set(account.project_id, true);
+        });
+      }
+    }
+
+    // Attach user data and GSC status to projects
     const projectsWithUsers = (projects || []).map(project => ({
       id: project.id,
       name: project.name,
@@ -84,6 +101,8 @@ export async function GET(request: NextRequest) {
       created_at: project.created_at,
       updated_at: project.updated_at || null,
       user_id: project.user_id,
+      cms_config: project.cms_config || null,
+      gsc_connected: gscMap.get(project.id) || false,
       user: usersMap.get(project.user_id) || null,
     }));
 

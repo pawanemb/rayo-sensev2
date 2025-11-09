@@ -3,8 +3,12 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FaPen, FaCopy } from "react-icons/fa";
+import { FaCopy } from "react-icons/fa";
+import { FaWordpress } from "react-icons/fa6";
+import { FcGoogle } from "react-icons/fc";
 import { MdDelete } from "react-icons/md";
+import { RxCross2 } from "react-icons/rx";
+import { SiShopify } from "react-icons/si";
 import {
   Table,
   TableBody,
@@ -36,6 +40,7 @@ interface Project {
     shopify?: { connected: boolean };
     wordpress?: { connected: boolean };
   } | null;
+  gsc_connected?: boolean;
   user?: {
     id: string;
     name: string;
@@ -190,36 +195,34 @@ export default function ProjectsPage() {
     );
   };
 
-  const getCMSIcons = (cmsConfig: Project['cms_config']) => {
+  const getCMSIcons = (cmsConfig: Project['cms_config'], gscConnected?: boolean) => {
     const shopifyConnected = cmsConfig?.shopify?.connected;
     const wordpressConnected = cmsConfig?.wordpress?.connected;
+    const hasAnyCMS = shopifyConnected || wordpressConnected;
 
     return (
       <div className="flex items-center gap-2">
-        {/* Shopify */}
-        <div className="relative group" title={shopifyConnected ? 'Shopify Connected' : 'Shopify Not Connected'}>
-          {shopifyConnected ? (
-            <svg className="h-5 w-5 text-success-600 dark:text-success-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16.373 4.618c-.073 0-.15.024-.227.048-.05-.122-.122-.27-.22-.417-.293-.44-.732-.66-1.27-.66-.025 0-.05 0-.074.024-1.05-1.44-2.93-1.1-3.54-.88-.196-.562-.562-.806-.83-.806h-.05c-.147-.172-.318-.245-.513-.245-.66 0-1.27.513-1.76 1.416-.342.635-.61 1.44-.66 2.1-.88.27-1.49.464-1.54.488-.464.147-.488.172-.537.61-.05.318-1.27 9.8-1.27 9.8l10.5 1.83 4.54-1.1s-2.1-14.1-2.15-14.2zm-3.1.88c-.22.073-.464.147-.732.22v-.172c0-.562-.073-1.05-.196-1.44.44.05.733.66.928 1.39zm-1.44-.44c.122.367.196.88.196 1.56v.098c-.562.172-1.17.367-1.78.562.172-.66.513-1.32.928-1.76.122-.122.27-.27.44-.367.05 0 .073-.024.122-.024.05 0 .073-.024.098-.024zm-.66-1.05c.098 0 .196.024.27.073-.196.122-.392.293-.586.513-.562.66-1.05 1.66-1.22 2.64-.513.147-1 .318-1.49.464.22-1.44 1.27-3.54 3.03-3.69z"/>
-            </svg>
-          ) : (
-            <svg className="h-5 w-5 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16.373 4.618c-.073 0-.15.024-.227.048-.05-.122-.122-.27-.22-.417-.293-.44-.732-.66-1.27-.66-.025 0-.05 0-.074.024-1.05-1.44-2.93-1.1-3.54-.88-.196-.562-.562-.806-.83-.806h-.05c-.147-.172-.318-.245-.513-.245-.66 0-1.27.513-1.76 1.416-.342.635-.61 1.44-.66 2.1-.88.27-1.49.464-1.54.488-.464.147-.488.172-.537.61-.05.318-1.27 9.8-1.27 9.8l10.5 1.83 4.54-1.1s-2.1-14.1-2.15-14.2zm-3.1.88c-.22.073-.464.147-.732.22v-.172c0-.562-.073-1.05-.196-1.44.44.05.733.66.928 1.39zm-1.44-.44c.122.367.196.88.196 1.56v.098c-.562.172-1.17.367-1.78.562.172-.66.513-1.32.928-1.76.122-.122.27-.27.44-.367.05 0 .073-.024.122-.024.05 0 .073-.024.098-.024zm-.66-1.05c.098 0 .196.024.27.073-.196.122-.392.293-.586.513-.562.66-1.05 1.66-1.22 2.64-.513.147-1 .318-1.49.464.22-1.44 1.27-3.54 3.03-3.69z"/>
-            </svg>
-          )}
-        </div>
-        {/* WordPress */}
-        <div className="relative group" title={wordpressConnected ? 'WordPress Connected' : 'WordPress Not Connected'}>
-          {wordpressConnected ? (
-            <svg className="h-5 w-5 text-success-600 dark:text-success-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12.158 12.786L9.46 20.625c.806.237 1.657.366 2.54.366 1.047 0 2.051-.18 2.986-.51-.024-.037-.046-.078-.065-.123l-2.76-7.57zM3.008 12c0 3.56 2.07 6.634 5.068 8.092L3.788 8.342c-.5 1.117-.78 2.354-.78 3.658zm15.06-.454c0-1.112-.398-1.88-.74-2.48-.456-.74-.883-1.368-.883-2.11 0-.825.627-1.595 1.51-1.595.04 0 .078.006.116.008-1.598-1.464-3.73-2.36-6.07-2.36-3.14 0-5.904 1.613-7.512 4.053.21.007.41.01.58.01.94 0 2.395-.114 2.395-.114.484-.028.54.684.057.74 0 0-.487.058-1.03.086l3.275 9.74 1.968-5.902-1.4-3.838c-.485-.028-.944-.085-.944-.085-.486-.03-.43-.77.056-.742 0 0 1.484.114 2.368.114.94 0 2.397-.114 2.397-.114.486-.028.543.684.058.74 0 0-.488.058-1.03.086l3.25 9.665.897-2.996c.456-1.17.684-2.137.684-2.907zm1.82-3.86c.04.286.06.593.06.924 0 .912-.17 1.938-.683 3.22l-2.746 7.94c2.672-1.558 4.47-4.454 4.47-7.77 0-1.564-.4-3.033-1.1-4.314zM12 22C6.486 22 2 17.514 2 12S6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/>
-            </svg>
-          ) : (
-            <svg className="h-5 w-5 text-gray-300 dark:text-gray-600" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12.158 12.786L9.46 20.625c.806.237 1.657.366 2.54.366 1.047 0 2.051-.18 2.986-.51-.024-.037-.046-.078-.065-.123l-2.76-7.57zM3.008 12c0 3.56 2.07 6.634 5.068 8.092L3.788 8.342c-.5 1.117-.78 2.354-.78 3.658zm15.06-.454c0-1.112-.398-1.88-.74-2.48-.456-.74-.883-1.368-.883-2.11 0-.825.627-1.595 1.51-1.595.04 0 .078.006.116.008-1.598-1.464-3.73-2.36-6.07-2.36-3.14 0-5.904 1.613-7.512 4.053.21.007.41.01.58.01.94 0 2.395-.114 2.395-.114.484-.028.54.684.057.74 0 0-.487.058-1.03.086l3.275 9.74 1.968-5.902-1.4-3.838c-.485-.028-.944-.085-.944-.085-.486-.03-.43-.77.056-.742 0 0 1.484.114 2.368.114.94 0 2.397-.114 2.397-.114.486-.028.543.684.058.74 0 0-.488.058-1.03.086l3.25 9.665.897-2.996c.456-1.17.684-2.137.684-2.907zm1.82-3.86c.04.286.06.593.06.924 0 .912-.17 1.938-.683 3.22l-2.746 7.94c2.672-1.558 4.47-4.454 4.47-7.77 0-1.564-.4-3.033-1.1-4.314zM12 22C6.486 22 2 17.514 2 12S6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/>
-            </svg>
-          )}
-        </div>
+        {/* CMS Icon - Shopify, WordPress, or Cross */}
+        {shopifyConnected ? (
+          <div className="relative group" title="Shopify Connected">
+            <SiShopify className="h-5 w-5 text-[#96bf48]" />
+          </div>
+        ) : wordpressConnected ? (
+          <div className="relative group" title="WordPress Connected">
+            <FaWordpress className="h-5 w-5 text-[#21759b]" />
+          </div>
+        ) : (
+          <div className="relative group" title="No CMS Connected">
+            <RxCross2 className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+          </div>
+        )}
+
+        {/* GSC Icon - Only show if any CMS is connected */}
+        {hasAnyCMS && (
+          <div className="relative group" title={gscConnected ? "Google Search Console Connected" : "Google Search Console Not Connected"}>
+            <FcGoogle className={`h-5 w-5 ${!gscConnected && 'opacity-30 grayscale'}`} />
+          </div>
+        )}
       </div>
     );
   };
@@ -275,7 +278,7 @@ export default function ProjectsPage() {
         <div className="relative">
           <input
             className="w-full rounded-full border border-gray-200 bg-white px-4 py-2.5 pr-11 text-sm shadow-inner focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:w-64"
-            placeholder="Search by name, URL, or ID..."
+            placeholder="Search by name or URL..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
@@ -369,7 +372,7 @@ export default function ProjectsPage() {
                           )}
                         </TableCell>
                         <TableCell className="px-5 py-4">
-                          {getCMSIcons(project.cms_config)}
+                          {getCMSIcons(project.cms_config, project.gsc_connected)}
                         </TableCell>
                         <TableCell className="px-5 py-4">
                           <div className="flex items-center gap-2">
