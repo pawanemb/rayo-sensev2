@@ -10,10 +10,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EditUserModal } from "@/components/users/EditUserModal";
 import { updateUser } from "@/services/userService";
 
+interface UserInformationData {
+  occupation?: string;
+  role?: string;
+  purpose?: string;
+  how_did_you_hear_about_us?: string;
+}
+
 interface UserInformationProps {
   userId: string;
   userData?: User;
-  userInformation?: any;
+  userInformation?: UserInformationData;
   onUserUpdated?: () => void;
 }
 
@@ -31,7 +38,7 @@ const providerIcon = (provider: string) => {
   }
 };
 
-export default function UserInformation({ userId, userData, userInformation, onUserUpdated }: UserInformationProps) {
+export default function UserInformation({ userData, userInformation, onUserUpdated }: UserInformationProps) {
   const [copiedId, setCopiedId] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);

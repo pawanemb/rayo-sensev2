@@ -7,8 +7,19 @@ interface UserBlogsProps {
   userId: string;
 }
 
+interface BlogRecord {
+  _id: string;
+  title: string;
+  status: string;
+  created_at: string;
+  project_id?: string;
+  projectName?: string | null;
+  projectUrl?: string | null;
+  word_count?: number;
+}
+
 export default function UserBlogs({ userId }: UserBlogsProps) {
-  const [blogs, setBlogs] = useState<any[]>([]);
+  const [blogs, setBlogs] = useState<BlogRecord[]>([]);
   const [totalBlogs, setTotalBlogs] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -25,7 +36,7 @@ export default function UserBlogs({ userId }: UserBlogsProps) {
         
         // Fetch project names for all blogs
         const blogsWithProjects = await Promise.all(
-          (data.blogs || []).map(async (blog: any) => {
+          (data.blogs || []).map(async (blog: BlogRecord) => {
             if (blog.project_id) {
               try {
                 const projectRes = await fetch(`/api/projects/${blog.project_id}`);
@@ -59,6 +70,7 @@ export default function UserBlogs({ userId }: UserBlogsProps) {
 
   useEffect(() => {
     fetchBlogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const handleCopyId = async (blogId: string) => {
@@ -175,6 +187,7 @@ export default function UserBlogs({ userId }: UserBlogsProps) {
                         </p>
                         {blog.projectName && blog.projectUrl && (
                           <div className="flex items-center gap-2 mt-1 min-w-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img 
                               src={`https://www.google.com/s2/favicons?domain=${new URL(blog.projectUrl).hostname}&sz=16`}
                               alt="" 
@@ -257,19 +270,16 @@ export default function UserBlogs({ userId }: UserBlogsProps) {
                     const maxVisible = 5;
                     
                     if (totalPages <= maxVisible + 2) {
-                      // Show all pages if total is small
                       for (let i = 1; i <= totalPages; i++) {
                         pages.push(i);
                       }
                     } else {
-                      // Always show first page
                       pages.push(1);
                       
                       if (currentPage > 3) {
                         pages.push('...');
                       }
                       
-                      // Show pages around current page
                       const start = Math.max(2, currentPage - 1);
                       const end = Math.min(totalPages - 1, currentPage + 1);
                       
@@ -283,7 +293,6 @@ export default function UserBlogs({ userId }: UserBlogsProps) {
                         pages.push('...');
                       }
                       
-                      // Always show last page
                       if (!pages.includes(totalPages)) {
                         pages.push(totalPages);
                       }

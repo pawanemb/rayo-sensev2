@@ -3,12 +3,33 @@
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-interface BillingInformationProps {
-  userId: string;
-  accountInformation?: any;
+interface AccountInformation {
+  balance?: number;
+  total_spent?: number;
+  credits?: number;
+  currency?: string;
+  plan_type?: string;
+  plan_duration?: string;
+  plan_status?: string;
+  plan_start_date?: string;
+  plan_end_date?: string;
+  billing_name?: string;
+  billing_email?: string;
+  billing_phone?: string;
+  billing_address?: string;
+  billing_city?: string;
+  billing_state?: string;
+  billing_country?: string;
+  billing_postal_code?: string;
+  billing_tax_number?: string;
 }
 
-export default function BillingInformation({ userId, accountInformation }: BillingInformationProps) {
+interface BillingInformationProps {
+  userId: string;
+  accountInformation?: AccountInformation;
+}
+
+export default function BillingInformation({ accountInformation }: BillingInformationProps) {
   if (!accountInformation) {
     return (
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
@@ -79,7 +100,7 @@ export default function BillingInformation({ userId, accountInformation }: Billi
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
           Billing Information
         </h2>
-        {getPlanTypeBadge(accountInformation.plan_type)}
+        {getPlanTypeBadge(accountInformation.plan_type || '')}
       </div>
       
       <div className="grid gap-6 lg:grid-cols-2">
@@ -107,7 +128,7 @@ export default function BillingInformation({ userId, accountInformation }: Billi
             {/* Plan Status */}
             <div className="flex items-center justify-between border-b border-gray-100 pb-3 dark:border-gray-800">
               <span className="text-gray-500 dark:text-gray-400">Plan Status</span>
-              {getPlanStatusBadge(accountInformation.plan_status)}
+              {getPlanStatusBadge(accountInformation.plan_status || '')}
             </div>
 
             {/* Plan Start Date */}
