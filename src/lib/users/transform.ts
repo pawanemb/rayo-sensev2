@@ -50,7 +50,9 @@ const generateDiceBearAvatar = (seed: string): string => {
   // Limit cache size to prevent memory issues (keep last 1000 avatars)
   if (avatarCache.size > 1000) {
     const firstKey = avatarCache.keys().next().value;
-    avatarCache.delete(firstKey);
+    if (firstKey) {
+      avatarCache.delete(firstKey);
+    }
   }
   
   return dataUri;
