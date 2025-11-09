@@ -6,6 +6,7 @@ import BillingInformation from "@/components/user-profile/BillingInformation";
 import UserProjects from "@/components/user-profile/UserProjects";
 import UserBlogs from "@/components/user-profile/UserBlogs";
 import UserInvoices from "@/components/user-profile/UserInvoices";
+import UserUsage from "@/components/user-profile/UserUsage";
 import type { User } from "@/services/userService";
 
 interface UserProfileProps {
@@ -34,7 +35,10 @@ export default function UserProfile({ userId, userData, userInformation, account
       <UserBlogs userId={userId} />
 
       {/* Invoices */}
-      <UserInvoices />
+      <UserInvoices userId={userId} />
+
+      {/* Usage History */}
+      <UserUsage userId={userId} />
     </div>
   );
 }

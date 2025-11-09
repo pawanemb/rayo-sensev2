@@ -2,39 +2,48 @@
 
 import React, { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Modal,
+  ModalHeader,
+  ModalTitle,
+  ModalBody,
+  ModalFooter,
+} from "@/components/ui/modal";
 
-interface UserInvoicesProps {
+interface UserUsageProps {
   userId: string;
 }
 
-export default function UserInvoices({ userId }: UserInvoicesProps) {
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [totalInvoices, setTotalInvoices] = useState(0);
+export default function UserUsage({ userId }: UserUsageProps) {
+  const [usage, setUsage] = useState<any[]>([]);
+  const [totalUsage, setTotalUsage] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const invoicesPerPage = 5;
+  const [selectedUsageData, setSelectedUsageData] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const usagePerPage = 5;
 
-  const fetchInvoices = async (page: number = 1) => {
+  const fetchUsage = async (page: number = 1) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/users/${userId}/invoices?page=${page}&limit=${invoicesPerPage}`);
+      const response = await fetch(`/api/users/${userId}/usage?page=${page}&limit=${usagePerPage}`);
       if (response.ok) {
         const data = await response.json();
-        setInvoices(data.invoices || []);
-        setTotalInvoices(data.totalInvoices || 0);
+        setUsage(data.usage || []);
+        setTotalUsage(data.totalUsage || 0);
         setCurrentPage(data.currentPage || 1);
         setTotalPages(data.totalPages || 1);
       }
     } catch (error) {
-      console.error('Failed to fetch invoices:', error);
+      console.error('Failed to fetch usage:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchInvoices();
+    fetchUsage();
   }, [userId]);
 
   const formatDate = (dateString?: string | null) => {
@@ -42,77 +51,79 @@ export default function UserInvoices({ userId }: UserInvoicesProps) {
     const date = new Date(dateString);
     if (Number.isNaN(date.getTime())) return dateString;
     
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
     });
   };
 
-  const formatCurrency = (amount: number, currency: string = 'USD') => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency
+      currency: 'USD'
     }).format(amount);
   };
 
   const getStatusBadge = (status: string) => {
     const statusColors: Record<string, string> = {
-      draft: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
-      sent: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-      paid: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400',
-      overdue: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
-      cancelled: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
-      partially_paid: 'bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400',
+      completed: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400',
+      pending: 'bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400',
+      failed: 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400',
     };
     
     return (
-      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[status] || statusColors.draft}`}>
-        {status?.toUpperCase().replace('_', ' ') || 'DRAFT'}
+      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[status] || statusColors.completed}`}>
+        {status?.toUpperCase() || 'COMPLETED'}
       </span>
     );
   };
 
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages || page === currentPage) return;
-    fetchInvoices(page);
+    fetchUsage(page);
   };
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="mb-6 flex items-center gap-3">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Invoices
+          Usage History
         </h2>
         <span className="inline-flex items-center rounded-full bg-brand-100 px-3 py-1 text-sm font-medium text-brand-700 dark:bg-brand-900/30 dark:text-brand-400">
-          {totalInvoices} {totalInvoices === 1 ? 'Invoice' : 'Invoices'}
+          {totalUsage} {totalUsage === 1 ? 'Record' : 'Records'}
         </span>
       </div>
 
       {isLoading ? (
         <div className="space-y-3">
           {/* Table Header Skeleton */}
-          <div className="grid grid-cols-5 gap-4 border-b border-gray-200 pb-3 dark:border-gray-800">
+          <div className="grid grid-cols-6 gap-4 border-b border-gray-200 pb-3 dark:border-gray-800">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-20" />
           </div>
           {/* Table Rows Skeleton */}
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="grid grid-cols-5 gap-4 border-b border-gray-100 py-3 dark:border-gray-800">
+            <div key={i} className="grid grid-cols-6 gap-4 border-b border-gray-100 py-3 dark:border-gray-800">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-6 w-16 rounded-full" />
               <Skeleton className="h-4 w-20" />
               <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-20" />
             </div>
           ))}
         </div>
-      ) : invoices.length === 0 ? (
+      ) : usage.length === 0 ? (
         <div className="py-8 text-center">
-          <p className="text-sm text-gray-500 dark:text-gray-400">No invoices found</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No usage records found</p>
         </div>
       ) : (
         <>
@@ -121,66 +132,96 @@ export default function UserInvoices({ userId }: UserInvoicesProps) {
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-800">
                   <th className="pb-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
-                    Invoice #
+                    Service
                   </th>
                   <th className="pb-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
-                    Client
+                    Project
                   </th>
                   <th className="pb-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
-                    Status
+                    Base Cost
                   </th>
                   <th className="pb-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
-                    Amount
+                    Multiplier
                   </th>
                   <th className="pb-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
-                    Issue Date
+                    Actual Charge
                   </th>
                   <th className="pb-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
-                    Due Date
+                    Date
+                  </th>
+                  <th className="pb-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                    Usage Data
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {invoices.map((invoice) => (
+                {usage.map((record) => (
                   <tr
-                    key={invoice.id}
+                    key={record.id}
                     className="border-b border-gray-100 last:border-0 dark:border-gray-800"
                   >
                     <td className="py-3">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {invoice.invoice_number}
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                        {record.service_name.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                       </p>
                     </td>
                     <td className="py-3">
-                      <div className="min-w-0">
-                        <p className="text-sm text-gray-900 dark:text-white truncate">
-                          {invoice.client_name}
-                        </p>
-                        {invoice.client_email && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                            {invoice.client_email}
-                          </p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3">
-                      {getStatusBadge(invoice.status)}
-                    </td>
-                    <td className="py-3">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
-                        {formatCurrency(invoice.total, invoice.currency)}
-                      </p>
-                      {invoice.amount_paid > 0 && invoice.status === 'partially_paid' && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Paid: {formatCurrency(invoice.amount_paid, invoice.currency)}
-                        </p>
+                      {record.projects ? (
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <img 
+                              src={`https://www.google.com/s2/favicons?domain=${new URL(record.projects.url).hostname}&sz=16`}
+                              alt="" 
+                              className="h-4 w-4 flex-shrink-0 rounded"
+                              onError={(e) => {
+                                e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="gray"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>';
+                              }}
+                            />
+                            <span className="text-xs text-gray-900 dark:text-white truncate">
+                              {record.projects.name}
+                            </span>
+                          </div>
+                          <a
+                            href={record.projects.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 hover:underline truncate block mt-1"
+                          >
+                            {record.projects.url}
+                          </a>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">N/A</span>
                       )}
                     </td>
                     <td className="py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                      {formatDate(invoice.issue_date)}
+                      {formatCurrency(record.base_cost)}
                     </td>
                     <td className="py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                      {formatDate(invoice.due_date)}
+                      {record.multiplier}x
+                    </td>
+                    <td className="py-3">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                        {formatCurrency(record.actual_charge)}
+                      </p>
+                    </td>
+                    <td className="py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                      {formatDate(record.created_at)}
+                    </td>
+                    <td className="py-3">
+                      {record.usage_data ? (
+                        <button
+                          onClick={() => {
+                            setSelectedUsageData(record.usage_data);
+                            setIsModalOpen(true);
+                          }}
+                          className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                        >
+                          View
+                        </button>
+                      ) : (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">N/A</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -188,11 +229,31 @@ export default function UserInvoices({ userId }: UserInvoicesProps) {
             </table>
           </div>
 
+          {/* Usage Data Modal */}
+          <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="lg">
+            <ModalHeader>
+              <ModalTitle>Usage Data</ModalTitle>
+            </ModalHeader>
+            <ModalBody>
+              <pre className="whitespace-pre-wrap break-words text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-lg p-4 max-h-96 overflow-y-auto">
+                {selectedUsageData}
+              </pre>
+            </ModalBody>
+            <ModalFooter>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+              >
+                Close
+              </button>
+            </ModalFooter>
+          </Modal>
+
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-t border-gray-200 pt-4 dark:border-gray-800">
               <div className="text-sm text-gray-500 dark:text-gray-400">
-                Showing {((currentPage - 1) * invoicesPerPage) + 1} to {Math.min(currentPage * invoicesPerPage, totalInvoices)} of {totalInvoices} invoices
+                Showing {((currentPage - 1) * usagePerPage) + 1} to {Math.min(currentPage * usagePerPage, totalUsage)} of {totalUsage} records
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
