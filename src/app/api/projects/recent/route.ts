@@ -12,7 +12,7 @@ export async function GET() {
     // Fetch latest 10 projects
     const { data: projects, error } = await supabaseAdmin
       .from('projects')
-      .select('id, user_id, title, status, created_at')
+      .select('id, user_id, name, is_active, created_at')
       .order('created_at', { ascending: false })
       .limit(10);
 
@@ -39,8 +39,8 @@ export async function GET() {
           user_email: userData?.user?.email || 'Unknown',
           user_name: userData?.user?.user_metadata?.name || 'Unknown',
           user_avatar: userData?.user?.user_metadata?.avatar_url || userData?.user?.user_metadata?.picture || null,
-          title: project.title,
-          status: project.status,
+          title: project.name,
+          status: project.is_active ? 'Active' : 'Inactive',
           created_at: project.created_at,
         };
       })

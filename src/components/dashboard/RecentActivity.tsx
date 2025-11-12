@@ -93,6 +93,8 @@ export default function RecentActivity() {
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
+      'active': 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400',
+      'inactive': 'bg-gray-100 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400',
       'completed': 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400',
       'in-progress': 'bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
       'pending': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400',
