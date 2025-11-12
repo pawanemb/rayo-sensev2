@@ -95,12 +95,12 @@ export async function GET() {
       const userData = userDataMap.get(user.user_id);
       const avatar = userData?.avatar || getUserAvatar(user.user_id);
       // Create a minimal raw user object if not found (should not happen normally)
-      const raw = userData?.raw || {
+      const raw = userData?.raw || ({
         id: user.user_id,
         email: user.user_email,
         user_metadata: { full_name: user.name },
         app_metadata: { provider: user.provider },
-      } as User;
+      } as unknown as User);
 
       return {
         ...user,
