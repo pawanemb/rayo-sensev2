@@ -236,7 +236,7 @@ function ProjectGrowth() {
 
   // Chart options
   const options: ApexOptions = {
-    colors: ["#10b981"],
+    colors: ["#465fff"],
     chart: {
       fontFamily: "Outfit, sans-serif",
       type: "bar",
@@ -351,7 +351,7 @@ function ProjectGrowth() {
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-success-600 text-white rounded-md hover:bg-success-700 transition-colors text-sm"
+            className="px-4 py-2 bg-brand-500 text-white rounded-md hover:bg-brand-600 transition-colors text-sm"
           >
             Refresh Page
           </button>
@@ -378,7 +378,7 @@ function ProjectGrowth() {
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 flex items-center gap-2">
               New Projects
-              <span className="text-sm bg-success-50 text-success-600 py-0.5 px-2 rounded-full dark:bg-success-500/15 dark:text-success-400">
+              <span className="text-sm bg-brand-50 text-brand-600 py-0.5 px-2 rounded-full dark:bg-brand-500/15 dark:text-brand-400">
                 {growthData?.growth_data.reduce((sum, item) => sum + item.count, 0) || 0}
               </span>
             </h3>
@@ -419,7 +419,7 @@ function ProjectGrowth() {
                 {(['last7days', 'last30days', 'last3months', 'last6months', 'custom'] as const).map((option) => (
                   <button
                     key={option}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${timeFrame === option ? 'bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-400' : 'text-gray-700 dark:text-gray-300'}`}
+                    className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${timeFrame === option ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400' : 'text-gray-700 dark:text-gray-300'}`}
                     onClick={() => {
                       handleTimeFrameChange(option);
                       setIsTimeFrameDropdownOpen(false);
@@ -448,7 +448,7 @@ function ProjectGrowth() {
                 className="w-24 p-2"
               >
                 <button
-                  className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${periodType === 'day' ? 'bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-400' : 'text-gray-700 dark:text-gray-300'}`}
+                  className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${periodType === 'day' ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400' : 'text-gray-700 dark:text-gray-300'}`}
                   onClick={() => {
                     setPeriodType('day');
                     setIsPeriodTypeDropdownOpen(false);
