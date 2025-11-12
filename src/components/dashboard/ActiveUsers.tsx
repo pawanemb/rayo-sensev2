@@ -132,13 +132,41 @@ export default function ActiveUsers() {
   if (isLoading) {
     return (
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3 mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Active Users
           </h3>
+          <div className="h-6 w-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
         </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-500"></div>
+
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map((index) => (
+            <div
+              key={index}
+              className="flex items-start gap-4 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30"
+            >
+              {/* Avatar Skeleton */}
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+              </div>
+
+              {/* User Info Skeleton */}
+              <div className="flex-1 min-w-0 space-y-2">
+                {/* Name skeleton */}
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
+                {/* Email skeleton */}
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-40 animate-pulse"></div>
+              </div>
+
+              {/* Last Activity Skeleton */}
+              <div className="flex-shrink-0 text-right space-y-2">
+                {/* Label skeleton */}
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse"></div>
+                {/* Time skeleton */}
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16 animate-pulse"></div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
