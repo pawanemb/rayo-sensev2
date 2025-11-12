@@ -156,7 +156,13 @@ export async function GET(request: NextRequest) {
       }
     ];
 
-    let aggregationResult: any[];
+    let aggregationResult: Array<{
+      _id: string;
+      count: number;
+      year: number;
+      month: number;
+      day: number;
+    }>;
     try {
       // Set a reasonable timeout for the aggregation
       aggregationResult = await blogsCollection.aggregate(pipeline, {

@@ -98,7 +98,7 @@ function BlogsGrowth() {
   useEffect(() => {
     if (timeFrame !== 'custom') {
       const today = new Date();
-      let calculatedStartDate = new Date();
+      const calculatedStartDate = new Date();
 
       switch (timeFrame) {
         case 'last7days':
@@ -182,7 +182,7 @@ function BlogsGrowth() {
         const data = await getBlogsGrowthData(periodType, startDate, endDate);
         setGrowthData(data);
         setHasError(false);
-      } catch (error) {
+      } catch {
         setHasError(true);
       } finally {
         setIsLoading(false);
@@ -190,6 +190,48 @@ function BlogsGrowth() {
     };
 
     fetchData();
+  };
+
+  // Export to CSV function
+  const exportToCSV = () => {
+    if (!growthData || growthData.growth_data.length === 0) {
+      alert('No data available to export');
+      return;
+    }
+
+    // Create CSV content
+    const headers = ['Date/Period', 'Year', 'Blog Count'];
+    const rows = growthData.growth_data.map(item => [
+      item.date || item.label,
+      item.year,
+      item.count
+    ]);
+
+    // Add summary row
+    const totalBlogs = growthData.growth_data.reduce((sum, item) => sum + item.count, 0);
+    rows.push(['', 'Total:', totalBlogs]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+
+    // Generate filename with date range
+    const filename = `blogs-growth-${startDate}-to-${endDate}.csv`;
+    link.download = filename;
+
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   };
 
   // Chart options
@@ -311,6 +353,19 @@ function BlogsGrowth() {
 
           {/* Time frame selector */}
           <div className="flex items-center gap-2">
+            {/* Export CSV Button */}
+            <button
+              onClick={exportToCSV}
+              disabled={!growthData || growthData.growth_data.length === 0}
+              className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Export to CSV"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span className="hidden sm:inline">Export CSV</span>
+            </button>
+
             <div className="relative">
               <button
                 className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors dropdown-toggle"
