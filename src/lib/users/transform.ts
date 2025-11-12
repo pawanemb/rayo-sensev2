@@ -40,13 +40,13 @@ const generateDiceBearAvatar = (seed: string): string => {
   const avatar = createAvatar(adventurer, {
     seed,
   });
-  
+
   // Use built-in toDataUri method (more efficient than manual base64 encoding)
   const dataUri = avatar.toDataUri();
-  
+
   // Cache the result
   avatarCache.set(seed, dataUri);
-  
+
   // Limit cache size to prevent memory issues (keep last 1000 avatars)
   if (avatarCache.size > 1000) {
     const firstKey = avatarCache.keys().next().value;
@@ -54,7 +54,7 @@ const generateDiceBearAvatar = (seed: string): string => {
       avatarCache.delete(firstKey);
     }
   }
-  
+
   return dataUri;
 };
 
