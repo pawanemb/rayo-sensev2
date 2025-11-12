@@ -90,9 +90,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.location.pathname.includes('/login')
       );
 
-      // Always verify session with server (don't trust stale cookies)
+      // OPTIMIZATION: Check for cached auth cookie to prevent blank screen
+      // This provides instant UI while we verify with server in background
+      const hasAuthCookie = Cookies.get('auth') || Cookies.get('supabase-auth-token');
+
+      if (hasAuthCookie) {
+        // Optimistically set authenticated state for instant UI
+        setIsAuthenticated(true);
+
+        // Try to parse cached user data for immediate display
+        try {
+          const authData = Cookies.get('auth');
+          if (authData) {
+            const userData = JSON.parse(authData);
+            setUser(userData);
+          }
+        } catch (e) {
+          console.error('Error parsing auth cookie:', e);
+        }
+
+        // Set loading to false immediately to show UI
+        setLoading(false);
+      }
+
+      // IMPORTANT: Always verify session with server (even if cookie exists)
+      // This ensures stale/invalid cookies are caught and handled
       if (!isSigninPage) {
-        checkSession();
+        // Small delay to prevent flash if cookie data is shown
+        setTimeout(() => {
+          checkSession();
+        }, 100);
       } else {
         // Just set loading to false when on login pages
         setLoading(false);
