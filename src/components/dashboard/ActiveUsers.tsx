@@ -274,7 +274,7 @@ export default function ActiveUsers() {
               {/* Last Activity Time */}
               <div className="flex-shrink-0 text-right">
                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  Latest Activity
+                  Last seen
                 </div>
                 <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
                   {getTimeAgo(user.last_activity)}
