@@ -457,7 +457,7 @@ function ProjectGrowth() {
                   Daily
                 </button>
                 <button
-                  className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${periodType === 'month' ? 'bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-400' : 'text-gray-700 dark:text-gray-300'}`}
+                  className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${periodType === 'month' ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400' : 'text-gray-700 dark:text-gray-300'}`}
                   onClick={() => {
                     setPeriodType('month');
                     setIsPeriodTypeDropdownOpen(false);
@@ -495,7 +495,7 @@ function ProjectGrowth() {
 
             <button
               onClick={applyCustomDateRange}
-              className="px-3 py-1 bg-success-600 text-white text-sm rounded-md hover:bg-success-700 transition-colors"
+              className="px-3 py-1 bg-brand-500 text-white text-sm rounded-md hover:bg-brand-600 transition-colors"
             >
               Apply
             </button>
