@@ -31,7 +31,7 @@ export default function RecentOrders() {
   const [hasError, setHasError] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<'all' | 'captured' | 'created'>('captured');
-  const perPage = 5;
+  const perPage = 4;
 
   useEffect(() => {
     const fetchPayments = async () => {
@@ -87,12 +87,23 @@ export default function RecentOrders() {
 
   const formatAmount = (amount: number, currency: string) => {
     const formattedAmount = (amount / 100).toFixed(2); // Razorpay amounts are in paise
-    return `${currency} ${formattedAmount}`;
+    const currencySymbol = currency.toUpperCase() === 'USD' ? '$' : currency.toUpperCase() === 'INR' ? '₹' : currency;
+    return `${currencySymbol}${formattedAmount}`;
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const dateStr = date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const timeStr = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+    return { date: dateStr, time: timeStr };
   };
 
   return (
@@ -138,8 +149,67 @@ export default function RecentOrders() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+        <div className="max-w-full overflow-x-auto min-h-[380px]">
+          <Table>
+            {/* Table Header */}
+            <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
+              <TableRow>
+                <TableCell
+                  isHeader
+                  className="py-3 pr-8 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                >
+                  User
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                >
+                  Description
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="py-3 pr-8 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                >
+                  Amount
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                >
+                  Date
+                </TableCell>
+              </TableRow>
+            </TableHeader>
+
+            {/* Skeleton Body */}
+            <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
+              {[...Array(4)].map((_, index) => (
+                <TableRow key={index}>
+                  <TableCell className="py-3 pr-8">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+                      <div className="flex flex-col gap-2">
+                        <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                        <div className="h-3 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <div className="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  </TableCell>
+                  <TableCell className="py-3 pr-8">
+                    <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <div className="flex flex-col gap-2">
+                      <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                      <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       ) : hasError ? (
         <div className="flex flex-col items-center justify-center py-12">
@@ -152,14 +222,14 @@ export default function RecentOrders() {
           </p>
         </div>
       ) : (
-        <div className="max-w-full overflow-x-auto">
+        <div className="max-w-full overflow-x-auto min-h-[380px]">
           <Table>
             {/* Table Header */}
             <TableHeader className="border-gray-100 dark:border-gray-800 border-y">
               <TableRow>
                 <TableCell
                   isHeader
-                  className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  className="py-3 pr-8 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
                   User
                 </TableCell>
@@ -171,7 +241,7 @@ export default function RecentOrders() {
                 </TableCell>
                 <TableCell
                   isHeader
-                  className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  className="py-3 pr-8 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
                   Amount
                 </TableCell>
@@ -186,40 +256,50 @@ export default function RecentOrders() {
 
             {/* Table Body */}
             <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {currentPayments.map((payment) => (
-                <TableRow key={payment.id}>
-                  <TableCell className="py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="relative h-10 w-10 overflow-hidden rounded-full border border-gray-100 dark:border-gray-700">
-                        <Image
-                          src={getUserAvatar(payment.user_id, payment.user_avatar)}
-                          alt={payment.user_name}
-                          fill
-                          sizes="40px"
-                          className="object-cover"
-                        />
+              {currentPayments.map((payment) => {
+                const formattedDateTime = formatDate(payment.created_at);
+                return (
+                  <TableRow key={payment.id}>
+                    <TableCell className="py-3 pr-8">
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-10 w-10 overflow-hidden rounded-full border border-gray-100 dark:border-gray-700">
+                          <Image
+                            src={getUserAvatar(payment.user_id, payment.user_avatar)}
+                            alt={payment.user_name}
+                            fill
+                            sizes="40px"
+                            className="object-cover"
+                          />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                            {payment.user_name}
+                          </p>
+                          <span className="text-gray-500 text-theme-xs dark:text-gray-400">
+                            {payment.user_email}
+                          </span>
+                        </div>
                       </div>
+                    </TableCell>
+                    <TableCell className="py-3 text-gray-600 text-theme-sm dark:text-gray-300">
+                      {payment.description || '-'}
+                    </TableCell>
+                    <TableCell className="py-3 pr-8 font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                      {formatAmount(payment.amount, payment.currency)}
+                    </TableCell>
+                    <TableCell className="py-3">
                       <div>
-                        <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                          {payment.user_name}
+                        <p className="text-gray-800 text-theme-sm dark:text-white/90">
+                          {formattedDateTime.date}
                         </p>
                         <span className="text-gray-500 text-theme-xs dark:text-gray-400">
-                          {payment.user_email}
+                          {formattedDateTime.time}
                         </span>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-3 text-gray-600 text-theme-sm dark:text-gray-300">
-                    {payment.description || '-'}
-                  </TableCell>
-                  <TableCell className="py-3 font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                    {formatAmount(payment.amount, payment.currency)}
-                  </TableCell>
-                  <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                    {formatDate(payment.created_at)}
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
 

@@ -375,16 +375,6 @@ function ProjectGrowth() {
     );
   }
 
-  const getTimeFrameLabel = () => {
-    switch (timeFrame) {
-      case 'last7days': return 'Last 7 days';
-      case 'last30days': return 'Last 30 days';
-      case 'last3months': return 'Last 3 months';
-      case 'last6months': return 'Last 6 months';
-      case 'custom': return `${startDate} to ${endDate}`;
-    }
-  };
-
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="flex flex-col space-y-4">
@@ -394,10 +384,9 @@ function ProjectGrowth() {
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 flex items-center gap-2">
               New Projects
               <span className="text-sm bg-brand-50 text-brand-600 py-0.5 px-2 rounded-full dark:bg-brand-500/15 dark:text-brand-400">
-                {growthData?.growth_data.reduce((sum, item) => sum + item.count, 0) || 0}
+                {growthData?.total_projects || 0}
               </span>
             </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{getTimeFrameLabel()}</p>
           </div>
 
           {/* Time frame selector */}

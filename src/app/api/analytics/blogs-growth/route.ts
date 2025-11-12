@@ -130,20 +130,16 @@ export async function GET(request: NextRequest) {
     const db = client.db(process.env.MONGODB_DB_NAME);
     const blogsCollection = db.collection('blogs');
 
-    // Get total blogs count in the date range
+    // Get total blogs count (ALL blogs, not just in date range)
     let totalBlogs: number;
     try {
       totalBlogs = await blogsCollection.countDocuments({
-        created_at: {
-          $gte: startDate,
-          $lte: endDate,
-          $exists: true
-        }
+        created_at: { $exists: true }
       });
     } catch (error) {
       console.error('[BLOGS-GROWTH] Error counting blogs:', error);
       return NextResponse.json(
-        { success: false, error: 'Failed to count blogs in the specified date range.' },
+        { success: false, error: 'Failed to count total blogs.' },
         { status: 500 }
       );
     }

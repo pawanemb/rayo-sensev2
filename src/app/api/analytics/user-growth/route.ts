@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     console.log('👥 Fetching ALL users - looping through all pages...');
 
     // Fetch ALL users by looping through pages
-    let allUsers: any[] = [];
+    let allUsers: Array<{ created_at: string }> = [];
     let page = 1;
     const perPage = 1000;
 

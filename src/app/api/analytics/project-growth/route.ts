@@ -115,7 +115,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const totalProjects = projects?.length || 0;
+    // Get total projects count (ALL projects in database, not just in date range)
+    const { count: totalProjectsCount, error: countError } = await supabaseAdmin
+      .from('projects')
+      .select('*', { count: 'exact', head: true });
+
+    if (countError) {
+      console.error('[PROJECT-GROWTH] Error counting total projects:', countError);
+    }
+
+    const totalProjects = totalProjectsCount || 0;
 
     // Helper function to convert UTC date to IST
     const toIST = (date: Date): Date => {
