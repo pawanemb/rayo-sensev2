@@ -1,24 +1,13 @@
 "use client";
 import Image from "next/image";
-import React, { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
-  const router = useRouter();
-  const supabase = createClient();
-
-  useEffect(() => {
-    async function getUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    }
-    getUser();
-  }, [supabase.auth]);
+  const { user, logout } = useAuth();
 
   function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     e.stopPropagation();
@@ -30,34 +19,27 @@ export default function UserDropdown() {
   }
 
   async function handleSignOut() {
-    try {
-      await fetch('/api/auth/signout', {
-        method: 'POST',
-      });
-      router.push('/signin');
-      router.refresh();
-    } catch (error) {
-      console.error('Sign out error:', error);
-    }
+    closeDropdown();
+    await logout();
   }
   return (
     <div className="relative">
       <button
-        onClick={toggleDropdown} 
+        onClick={toggleDropdown}
         className="flex items-center text-gray-700 dark:text-gray-400 dropdown-toggle"
       >
         <span className="mr-3 overflow-hidden rounded-full h-11 w-11 bg-brand-500 flex items-center justify-center">
-          {user?.user_metadata?.avatar_url ? (
+          {user?.avatar ? (
             <Image
               width={44}
               height={44}
-              src={user.user_metadata.avatar_url}
-              alt="User"
+              src={user.avatar}
+              alt={user.name || 'User'}
               className="w-full h-full object-cover"
             />
           ) : (
             <span className="text-white font-medium text-lg">
-              {(user?.user_metadata?.full_name || user?.email || 'A')
+              {(user?.name || user?.email || 'A')
                 .charAt(0)
                 .toUpperCase()}
             </span>
@@ -65,7 +47,7 @@ export default function UserDropdown() {
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">
-          {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Admin'}
+          {user?.name || 'Admin'}
         </span>
 
         <svg
@@ -95,7 +77,7 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {user?.user_metadata?.full_name || 'Administrator'}
+            {user?.name || 'Administrator'}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
             {user?.email || 'admin@company.com'}

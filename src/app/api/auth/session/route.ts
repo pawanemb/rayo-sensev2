@@ -1,25 +1,14 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAdmin, handleApiError } from '@/lib/auth/requireAdmin';
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    // Use centralized requireAdmin - handles all auth checks
+    const user = await requireAdmin();
 
-    const { data: { user }, error } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      return NextResponse.json({ user: null }, { status: 401 });
-    }
-
-    // Check if user is admin
+    // Return normalized user data
     const userRole = (user.user_metadata?.role || user.app_metadata?.role || '').toLowerCase();
-    const isAdmin = userRole === 'admin' || userRole === 'administrator';
 
-    if (!isAdmin) {
-      return NextResponse.json({ user: null, error: 'Admin access required' }, { status: 403 });
-    }
-
-    // Return user data
     return NextResponse.json({
       user: {
         id: user.id,
@@ -32,6 +21,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Session check error:', error);
-    return NextResponse.json({ user: null, error: 'Session check failed' }, { status: 500 });
+    return handleApiError(error);
   }
 }

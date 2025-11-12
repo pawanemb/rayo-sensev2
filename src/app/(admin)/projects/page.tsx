@@ -102,6 +102,7 @@ export default function ProjectsPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_active: newStatus }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -133,7 +134,9 @@ export default function ProjectsPage() {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch(`/api/projects?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
+        const response = await fetch(`/api/projects?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`, {
+          credentials: 'include',
+        });
         if (!response.ok) throw new Error("Failed to load projects");
         const data = await response.json();
         setProjects(data.projects || []);

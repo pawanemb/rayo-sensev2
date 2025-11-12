@@ -90,34 +90,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.location.pathname.includes('/login')
       );
 
-      // Check for a cookie-based authentication first to prevent flashes
-      const hasAuthCookie = Cookies.get('auth') || Cookies.get('supabase-auth-token');
-
-      if (hasAuthCookie) {
-        // If we have a cookie, assume authenticated temporarily while we verify
-        setIsAuthenticated(true);
-
-        // Try to parse the auth cookie for immediate user data
-        try {
-          const authData = Cookies.get('auth');
-          if (authData) {
-            const userData = JSON.parse(authData);
-            setUser(userData);
-          }
-        } catch (e) {
-          console.error('Error parsing auth cookie:', e);
-        }
-
-        // Set loading to false immediately since we have cookie data
-        setLoading(false);
-      }
-
-      // Always check the session to verify authentication properly
+      // Always verify session with server (don't trust stale cookies)
       if (!isSigninPage) {
-        // Use a small delay to prevent flash redirects
-        setTimeout(() => {
-          checkSession();
-        }, 100);
+        checkSession();
       } else {
         // Just set loading to false when on login pages
         setLoading(false);
@@ -125,7 +100,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [mounted, checkSession]);
 
-  // Set up periodic session check (every 5 minutes)
+  // Set up periodic session check (every 30 seconds)
+  // Faster checks ensure session expiration is detected quickly
   useEffect(() => {
     if (!mounted) return;
 
@@ -140,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (isAuthenticated) {
         checkSession();
       }
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 30 * 1000); // 30 seconds (was 5 minutes)
 
     return () => clearInterval(intervalId);
   }, [mounted, isAuthenticated, checkSession]);

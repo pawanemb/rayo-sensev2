@@ -60,6 +60,7 @@ export const getUsers = async (params: GetUsersParams = {}): Promise<UserListRes
 
   const response = await fetch(`/api/users?${query.toString()}`, {
     cache: "no-store",
+    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -83,6 +84,7 @@ export const getUserById = async (id: string): Promise<User> => {
   
   const response = await fetch(`${baseUrl}/api/users/${id}`, {
     cache: "no-store",
+    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -108,6 +110,7 @@ export const createUser = async (data: CreateUserPayload): Promise<User> => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
+    credentials: 'include',
   });
 
   const payload = await response.json().catch(() => ({}));
@@ -133,6 +136,7 @@ export const updateUser = async (id: string, data: UpdateUserPayload): Promise<U
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
+    credentials: 'include',
   });
 
   const payload = await response.json().catch(() => ({}));
@@ -147,6 +151,7 @@ export const updateUser = async (id: string, data: UpdateUserPayload): Promise<U
 export const deleteUser = async (id: string): Promise<void> => {
   const response = await fetch(`/api/users/${id}`, {
     method: "DELETE",
+    credentials: 'include',
   });
 
   if (!response.ok) {

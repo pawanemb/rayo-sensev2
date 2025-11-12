@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { handleApiError, requireAdmin } from "@/lib/auth/requireAdmin";
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Require admin authentication
+    await requireAdmin();
+
     const resolvedParams = await params;
-    
+
     const { data, error } = await supabaseAdmin
       .from('projects')
       .select('*')
@@ -22,9 +26,6 @@ export async function GET(
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error in project API:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch project' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
