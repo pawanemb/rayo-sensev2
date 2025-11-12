@@ -6,6 +6,8 @@ import Button from "@/components/ui/button/Button";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,36 +15,20 @@ export default function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, loading } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setIsLoading(true);
 
-    try {
-      const response = await fetch("/api/auth/signin", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+    const result = await login(email, password);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Sign in failed");
-        return;
-      }
-
-      // Success - redirect to admin dashboard
-      window.location.href = "/";
-    } catch (error) {
-      setError("An unexpected error occurred");
-      console.error("Sign in error:", error);
-    } finally {
-      setIsLoading(false);
+    if (result.success) {
+      // Success - redirect to admin dashboard using Next.js router
+      router.push('/');
+    } else {
+      setError(result.message || 'Sign in failed');
     }
   };
 
@@ -128,8 +114,8 @@ export default function SignInForm() {
               </span>
             </div>
             <div>
-              <Button className="w-full" size="sm" type="submit" disabled={isLoading}>
-                {isLoading ? (
+              <Button className="w-full" size="sm" type="submit" disabled={loading}>
+                {loading ? (
                   <>
                     <svg
                       className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
