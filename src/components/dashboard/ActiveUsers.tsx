@@ -175,7 +175,7 @@ export default function ActiveUsers() {
           Active Users
         </h3>
         <span
-          className={`text-sm bg-brand-50 text-brand-600 py-0.5 px-2 rounded-full dark:bg-brand-500/15 dark:text-brand-400 transition-all duration-300 ${
+          className={`text-sm bg-brand-50 text-brand-600 py-0.5 px-2 rounded-full dark:bg-brand-500/15 dark:text-white transition-all duration-300 ${
             countAnimation === 'up' ? 'animate-countUp' : countAnimation === 'down' ? 'animate-countDown' : ''
           }`}
         >

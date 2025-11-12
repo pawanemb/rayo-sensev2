@@ -82,6 +82,7 @@ function ProjectGrowth() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [growthData, setGrowthData] = useState<ProjectGrowthResponse | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // State for controls
   const [periodType, setPeriodType] = useState<'day' | 'month'>('day');
@@ -93,6 +94,26 @@ function ProjectGrowth() {
   // Dropdown state
   const [isTimeFrameDropdownOpen, setIsTimeFrameDropdownOpen] = useState(false);
   const [isPeriodTypeDropdownOpen, setIsPeriodTypeDropdownOpen] = useState(false);
+
+  // Detect dark mode
+  useEffect(() => {
+    const checkDarkMode = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setIsDarkMode(isDark);
+    };
+
+    // Check initially
+    checkDarkMode();
+
+    // Watch for changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Calculate date range based on selected time frame
   useEffect(() => {
@@ -262,16 +283,10 @@ function ProjectGrowth() {
         fontSize: '11px',
         fontFamily: 'Outfit, sans-serif',
         fontWeight: 600,
-        colors: ['#6B7280']
+        colors: [isDarkMode ? '#D1D5DB' : '#6B7280']
       },
       background: {
-        enabled: true,
-        foreColor: '#fff',
-        padding: 4,
-        borderRadius: 4,
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
-        opacity: 0.9,
+        enabled: false,
       }
     },
     stroke: {

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
 import React from "react";
 import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
-import StatisticsChart from "@/components/ecommerce/StatisticsChart";
 import RecentOrders from "@/components/ecommerce/RecentOrders";
 import DemographicCard from "@/components/ecommerce/DemographicCard";
 import BlogsGrowth from "@/components/dashboard/BlogsGrowth";
@@ -26,10 +25,6 @@ export default function Ecommerce() {
 
       <div className="col-span-12 xl:col-span-5">
         <ActiveUsers />
-      </div>
-
-      <div className="col-span-12">
-        <StatisticsChart />
       </div>
 
       <div className="col-span-12">
