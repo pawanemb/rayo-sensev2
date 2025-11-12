@@ -3,7 +3,7 @@ import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
-import { EyeCloseIcon, EyeIcon } from "@/icons";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 
@@ -114,9 +114,9 @@ export default function SignInForm() {
                   className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
                 >
                   {showPassword ? (
-                    <EyeIcon className="fill-gray-500 dark:fill-gray-400" />
+                    <FaEye className="fill-gray-500 dark:fill-gray-400" />
                   ) : (
-                    <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400" />
+                    <FaEyeSlash className="fill-gray-500 dark:fill-gray-400" />
                   )}
                 </span>
               </div>

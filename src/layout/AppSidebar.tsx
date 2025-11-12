@@ -4,13 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
-import {
-  BoxCubeIcon,
-  ChevronDownIcon,
-  GridIcon,
-  HorizontaLDots,
-  UserCircleIcon,
-} from "../icons/index";
+import { BsFillGrid3X3GapFill } from "react-icons/bs";
+import { BiDotsHorizontal } from "react-icons/bi";
+import { FaChevronDown, FaCube, FaRegUserCircle } from "react-icons/fa";
 import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
@@ -22,19 +18,17 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    icon: <GridIcon />,
+    icon: <BsFillGrid3X3GapFill />,
     name: "Dashboard",
-    subItems: [
-      { name: "Overview", path: "/", pro: false },
-    ],
-  },
+    path: "/",
+    },
   {
-    icon: <UserCircleIcon />,
+    icon: <FaRegUserCircle />,
     name: "Users",
     path: "/user",
   },
   {
-    icon: <BoxCubeIcon />,
+    icon: <FaCube />,
     name: "Projects",
     path: "/projects",
   },
@@ -79,7 +73,7 @@ const AppSidebar: React.FC = () => {
                 <span className={`menu-item-text`}>{nav.name}</span>
               )}
               {(isExpanded || isHovered || isMobileOpen) && (
-                <ChevronDownIcon
+                <FaChevronDown
                   className={`ml-auto w-5 h-5 transition-transform duration-200  ${
                     openSubmenu?.type === menuType &&
                     openSubmenu?.index === index
@@ -299,7 +293,7 @@ const AppSidebar: React.FC = () => {
                 {isExpanded || isHovered || isMobileOpen ? (
                   "Menu"
                 ) : (
-                  <HorizontaLDots />
+                  <BiDotsHorizontal />
                 )}
               </h2>
               {renderMenuItems(navItems, "main")}
@@ -316,7 +310,7 @@ const AppSidebar: React.FC = () => {
                 {isExpanded || isHovered || isMobileOpen ? (
                   "Others"
                 ) : (
-                  <HorizontaLDots />
+                  <BiDotsHorizontal />
                 )}
               </h2>
               {renderMenuItems(othersItems, "others")}
