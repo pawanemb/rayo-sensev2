@@ -90,11 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.location.pathname.includes('/login')
       );
 
-      // Check for a cookie-based authentication first
+      // Check for a cookie-based authentication first to prevent flashes
       const hasAuthCookie = Cookies.get('auth') || Cookies.get('supabase-auth-token');
 
       if (hasAuthCookie) {
-        // If we have a cookie, assume authenticated temporarily
+        // If we have a cookie, assume authenticated temporarily while we verify
         setIsAuthenticated(true);
 
         // Try to parse the auth cookie for immediate user data
@@ -107,14 +107,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (e) {
           console.error('Error parsing auth cookie:', e);
         }
+
+        // Set loading to false immediately since we have cookie data
+        setLoading(false);
       }
 
-      // Always check the session to verify authentication
+      // Always check the session to verify authentication properly
       if (!isSigninPage) {
+        // Use a small delay to prevent flash redirects
         setTimeout(() => {
           checkSession();
         }, 100);
       } else {
+        // Just set loading to false when on login pages
         setLoading(false);
       }
     }
