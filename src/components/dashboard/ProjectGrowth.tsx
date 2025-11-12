@@ -17,11 +17,11 @@ interface GrowthDataPoint {
   date?: string;
 }
 
-interface BlogsGrowthResponse {
-  total_blogs: number;
+interface ProjectGrowthResponse {
+  total_projects: number;
   growth_data: GrowthDataPoint[];
-  current_period_blogs: number;
-  last_period_blogs: number;
+  current_period_projects: number;
+  last_period_projects: number;
   period_type: 'day' | 'month';
 }
 
@@ -33,19 +33,19 @@ const formatDateForAPI = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-// Service function to fetch blogs growth data
-const getBlogsGrowthData = async (
+// Service function to fetch project growth data
+const getProjectGrowthData = async (
   periodType: 'day' | 'month' = 'month',
   startDate?: string,
   endDate?: string
-): Promise<BlogsGrowthResponse> => {
+): Promise<ProjectGrowthResponse> => {
   try {
     const params = new URLSearchParams({ period_type: periodType });
 
     if (startDate) params.append('start_date', startDate);
     if (endDate) params.append('end_date', endDate);
 
-    const response = await fetch(`/api/analytics/blogs-growth?${params.toString()}`, {
+    const response = await fetch(`/api/analytics/project-growth?${params.toString()}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -60,28 +60,28 @@ const getBlogsGrowthData = async (
     const data = await response.json();
 
     if (!data.success || !data.data) {
-      throw new Error('Invalid response format from blogs growth API');
+      throw new Error('Invalid response format from project growth API');
     }
 
     return data.data;
   } catch (error) {
-    console.error('Error fetching blogs growth data:', error);
+    console.error('Error fetching project growth data:', error);
 
     // Return fallback data
     return {
-      total_blogs: 0,
+      total_projects: 0,
       growth_data: [],
-      current_period_blogs: 0,
-      last_period_blogs: 0,
+      current_period_projects: 0,
+      last_period_projects: 0,
       period_type: periodType
     };
   }
 };
 
-function BlogsGrowth() {
+function ProjectGrowth() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [growthData, setGrowthData] = useState<BlogsGrowthResponse | null>(null);
+  const [growthData, setGrowthData] = useState<ProjectGrowthResponse | null>(null);
 
   // State for controls
   const [periodType, setPeriodType] = useState<'day' | 'month'>('day');
@@ -133,7 +133,7 @@ function BlogsGrowth() {
       try {
         setIsLoading(true);
         setHasError(false);
-        const data = await getBlogsGrowthData(periodType, startDate, endDate);
+        const data = await getProjectGrowthData(periodType, startDate, endDate);
         setGrowthData(data);
       } catch (error) {
         console.error('Error in component:', error);
@@ -179,7 +179,7 @@ function BlogsGrowth() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const data = await getBlogsGrowthData(periodType, startDate, endDate);
+        const data = await getProjectGrowthData(periodType, startDate, endDate);
         setGrowthData(data);
         setHasError(false);
       } catch {
@@ -200,7 +200,7 @@ function BlogsGrowth() {
     }
 
     // Create CSV content
-    const headers = ['Date/Period', 'Year', 'Blog Count'];
+    const headers = ['Date/Period', 'Year', 'Project Count'];
     const rows = growthData.growth_data.map(item => [
       item.date || item.label,
       item.year,
@@ -208,8 +208,8 @@ function BlogsGrowth() {
     ]);
 
     // Add summary row
-    const totalBlogs = growthData.growth_data.reduce((sum, item) => sum + item.count, 0);
-    rows.push(['', 'Total:', totalBlogs]);
+    const totalProjects = growthData.growth_data.reduce((sum, item) => sum + item.count, 0);
+    rows.push(['', 'Total:', totalProjects]);
 
     // Combine headers and rows
     const csvContent = [
@@ -224,7 +224,7 @@ function BlogsGrowth() {
     link.href = url;
 
     // Generate filename with date range
-    const filename = `blogs-growth-${startDate}-to-${endDate}.csv`;
+    const filename = `project-growth-${startDate}-to-${endDate}.csv`;
     link.download = filename;
 
     // Trigger download
@@ -236,7 +236,7 @@ function BlogsGrowth() {
 
   // Chart options
   const options: ApexOptions = {
-    colors: ["#465fff"],
+    colors: ["#10b981"],
     chart: {
       fontFamily: "Outfit, sans-serif",
       type: "bar",
@@ -301,7 +301,7 @@ function BlogsGrowth() {
       enabled: true,
       x: { show: false },
       y: {
-        formatter: (val: number) => `${val} blogs`,
+        formatter: (val: number) => `${val} projects`,
       },
       style: {
         fontSize: '12px',
@@ -319,7 +319,7 @@ function BlogsGrowth() {
 
   const series = [
     {
-      name: "New Blogs",
+      name: "New Projects",
       data: growthData?.growth_data.map(item => item.count) || [],
     },
   ];
@@ -347,11 +347,11 @@ function BlogsGrowth() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p className="font-medium mb-1">Unable to load data</p>
-            <p className="text-sm opacity-75">There was an issue fetching the blogs growth data</p>
+            <p className="text-sm opacity-75">There was an issue fetching the project growth data</p>
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-brand-500 text-white rounded-md hover:bg-brand-600 transition-colors text-sm"
+            className="px-4 py-2 bg-success-600 text-white rounded-md hover:bg-success-700 transition-colors text-sm"
           >
             Refresh Page
           </button>
@@ -377,8 +377,8 @@ function BlogsGrowth() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 flex items-center gap-2">
-              New Blogs
-              <span className="text-sm bg-brand-50 text-brand-600 py-0.5 px-2 rounded-full dark:bg-brand-500/15 dark:text-brand-400">
+              New Projects
+              <span className="text-sm bg-success-50 text-success-600 py-0.5 px-2 rounded-full dark:bg-success-500/15 dark:text-success-400">
                 {growthData?.growth_data.reduce((sum, item) => sum + item.count, 0) || 0}
               </span>
             </h3>
@@ -419,7 +419,7 @@ function BlogsGrowth() {
                 {(['last7days', 'last30days', 'last3months', 'last6months', 'custom'] as const).map((option) => (
                   <button
                     key={option}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${timeFrame === option ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400' : 'text-gray-700 dark:text-gray-300'}`}
+                    className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${timeFrame === option ? 'bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-400' : 'text-gray-700 dark:text-gray-300'}`}
                     onClick={() => {
                       handleTimeFrameChange(option);
                       setIsTimeFrameDropdownOpen(false);
@@ -448,7 +448,7 @@ function BlogsGrowth() {
                 className="w-24 p-2"
               >
                 <button
-                  className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${periodType === 'day' ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400' : 'text-gray-700 dark:text-gray-300'}`}
+                  className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${periodType === 'day' ? 'bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-400' : 'text-gray-700 dark:text-gray-300'}`}
                   onClick={() => {
                     setPeriodType('day');
                     setIsPeriodTypeDropdownOpen(false);
@@ -457,7 +457,7 @@ function BlogsGrowth() {
                   Daily
                 </button>
                 <button
-                  className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${periodType === 'month' ? 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400' : 'text-gray-700 dark:text-gray-300'}`}
+                  className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${periodType === 'month' ? 'bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-400' : 'text-gray-700 dark:text-gray-300'}`}
                   onClick={() => {
                     setPeriodType('month');
                     setIsPeriodTypeDropdownOpen(false);
@@ -495,7 +495,7 @@ function BlogsGrowth() {
 
             <button
               onClick={applyCustomDateRange}
-              className="px-3 py-1 bg-brand-500 text-white text-sm rounded-md hover:bg-brand-600 transition-colors"
+              className="px-3 py-1 bg-success-600 text-white text-sm rounded-md hover:bg-success-700 transition-colors"
             >
               Apply
             </button>
@@ -510,7 +510,7 @@ function BlogsGrowth() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
               <p className="text-lg font-medium mb-1">No data available</p>
-              <p className="text-sm opacity-75">No blogs found in the selected date range</p>
+              <p className="text-sm opacity-75">No projects found in the selected date range</p>
             </div>
           ) : (
             <div className="min-w-[650px] xl:min-w-full">
@@ -528,4 +528,4 @@ function BlogsGrowth() {
   );
 }
 
-export default BlogsGrowth;
+export default ProjectGrowth;

@@ -7,6 +7,7 @@ import StatisticsChart from "@/components/ecommerce/StatisticsChart";
 import RecentOrders from "@/components/ecommerce/RecentOrders";
 import DemographicCard from "@/components/ecommerce/DemographicCard";
 import BlogsGrowth from "@/components/dashboard/BlogsGrowth";
+import ProjectGrowth from "@/components/dashboard/ProjectGrowth";
 
 export const metadata: Metadata = {
   title:
@@ -33,6 +34,10 @@ export default function Ecommerce() {
 
       <div className="col-span-12">
         <BlogsGrowth />
+      </div>
+
+      <div className="col-span-12">
+        <ProjectGrowth />
       </div>
 
       <div className="col-span-12 xl:col-span-5">

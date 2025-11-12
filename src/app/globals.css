@@ -396,6 +396,18 @@
 .apexcharts-tooltip-text {
   @apply !text-theme-xs !text-gray-700 dark:!text-white/90;
 }
+/* BlogsGrowth chart - Show data labels only on hover */
+.apexcharts-datalabels {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  pointer-events: none;
+}
+
+.apexcharts-bar-area:hover ~ .apexcharts-datalabels,
+.apexcharts-canvas:hover .apexcharts-datalabels {
+  opacity: 1;
+}
+
 .apexcharts-tooltip-text-y-value {
   @apply !font-medium;
 }

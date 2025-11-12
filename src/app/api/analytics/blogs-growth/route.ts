@@ -168,7 +168,13 @@ export async function GET(request: NextRequest) {
       aggregationResult = await blogsCollection.aggregate(pipeline, {
         maxTimeMS: 30000, // 30 second timeout
         allowDiskUse: true // Allow disk usage for large datasets
-      }).toArray();
+      }).toArray() as Array<{
+        _id: string;
+        count: number;
+        year: number;
+        month: number;
+        day: number;
+      }>;
     } catch (error) {
       console.error('[BLOGS-GROWTH] Aggregation error:', error);
       return NextResponse.json(
