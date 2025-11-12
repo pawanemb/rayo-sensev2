@@ -76,7 +76,7 @@ export default function SignInForm() {
               Sign In
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Access your analytics and automation dashboards in seconds.
+              Welcome to Rayo Sense
             </p>
           </div>
 
