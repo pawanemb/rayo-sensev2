@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import { BsFillGrid3X3GapFill } from "react-icons/bs";
 import { BiDotsHorizontal } from "react-icons/bi";
-import { FaChevronDown, FaCube, FaRegUserCircle } from "react-icons/fa";
+import { FaChevronDown, FaCube, FaRegUserCircle, FaNewspaper } from "react-icons/fa";
 import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
@@ -31,6 +31,11 @@ const navItems: NavItem[] = [
     icon: <FaCube />,
     name: "Projects",
     path: "/projects",
+  },
+  {
+    icon: <FaNewspaper />,
+    name: "Blogs",
+    path: "/blogs",
   },
 ];
 

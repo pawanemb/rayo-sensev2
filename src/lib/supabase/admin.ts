@@ -20,3 +20,14 @@ export const supabaseAdmin = createClient(
 );
 
 export type SupabaseAdminClient = typeof supabaseAdmin;
+
+/**
+ * Get secure headers for Supabase Admin API requests
+ */
+export function getSecureHeaders() {
+  return {
+    'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+    'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+    'Content-Type': 'application/json'
+  };
+}
