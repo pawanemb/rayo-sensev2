@@ -31,6 +31,17 @@ interface TableCellProps {
   isHeader?: boolean; // If true, renders as <th>, otherwise <td>
   className?: string; // Optional className for styling
   colSpan?: number; // Number of columns to span
+  onClick?: () => void; // Optional click handler
+  scope?: string; // Optional scope attribute for accessibility
+}
+
+// Props for TableHead (alias for header cells)
+interface TableHeadProps {
+  children: ReactNode; // Cell content
+  className?: string; // Optional className for styling
+  colSpan?: number; // Number of columns to span
+  onClick?: () => void; // Optional click handler
+  scope?: string; // Optional scope attribute for accessibility
 }
 
 // Table Component
@@ -59,9 +70,22 @@ const TableCell: React.FC<TableCellProps> = ({
   isHeader = false,
   className,
   colSpan,
+  onClick,
+  scope,
 }) => {
   const CellTag = isHeader ? "th" : "td";
-  return <CellTag className={` ${className}`} colSpan={colSpan}>{children}</CellTag>;
+  return <CellTag className={` ${className}`} colSpan={colSpan} onClick={onClick} scope={scope}>{children}</CellTag>;
 };
 
-export { Table, TableHeader, TableBody, TableRow, TableCell };
+// TableHead Component (header cell)
+const TableHead: React.FC<TableHeadProps> = ({
+  children,
+  className,
+  colSpan,
+  onClick,
+  scope,
+}) => {
+  return <th className={` ${className}`} colSpan={colSpan} onClick={onClick} scope={scope}>{children}</th>;
+};
+
+export { Table, TableHeader, TableBody, TableRow, TableCell, TableHead };

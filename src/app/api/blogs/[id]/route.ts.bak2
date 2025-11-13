@@ -1,0 +1,376 @@
+import { NextResponse, NextRequest } from 'next/server';
+import clientPromise from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
+import { supabaseAdmin, getSecureHeaders } from '@/lib/supabase';
+
+// Helper function to verify authentication
+const verifyAuth = async (request: NextRequest) => {
+  // Get token from cookies
+  const token = request.cookies.get('supabase-auth-token')?.value;
+  
+  if (!token) {
+    return null;
+  }
+  
+  try {
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    if (error || !data.user) return null;
+    
+    // Check if user has admin role (case insensitive)
+    const userRole = data.user.app_metadata?.role?.toLowerCase() || '';
+    const isAdmin = userRole === 'admin' || userRole === 'administrator';
+    if (!isAdmin) return null;
+    
+    return { user: data.user, token, id: data.user.id };
+  } catch (error) {
+    console.error('Auth verification error:', error);
+    return null;
+  }
+};
+
+interface ApiError extends Error {
+  code?: string;
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+): Promise<NextResponse> {
+  // Get the blog ID from the URL params
+  const { id } = params;
+  // Verify authentication
+  const auth = await verifyAuth(request);
+  
+  // Return 401 if not authenticated
+  if (!auth) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+  try {
+    const id = params.id;
+    const { searchParams } = new URL(request.url);
+    const projectId = searchParams.get('project_id');
+    
+    // Connect to MongoDB
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME);
+    const collection = db.collection('blogs');
+    
+    // Build query filter
+    let filter: Record<string, any> = {};
+    
+    // Check if ID is a valid MongoDB ObjectId
+    if (ObjectId.isValid(id)) {
+      filter._id = new ObjectId(id);
+    } else {
+      // If not a valid ObjectId, assume it's a URL
+      filter.url = id;
+    }
+    
+    // Add project_id filter if provided
+    if (projectId) {
+      filter.project_id = projectId;
+    }
+    
+    // Find the document with only specific fields
+    const document = await collection.findOne(filter, {
+      projection: {
+        _id: 1,
+        project_id: 1,
+        title: 1,
+        content: 1,
+        primary_keyword: 1,
+        secondary_keywords: 1,
+        category: 1,
+        intent: 1,
+        word_count: 1,
+        created_at: 1,
+        updated_at: 1,
+        user_id: 1
+      }
+    });
+    
+    if (!document) {
+      return NextResponse.json(
+        { success: false, error: 'Blog post not found', code: 'blog_not_found' },
+        { status: 404 }
+      );
+    }
+    
+    // Fetch project details from Supabase
+    let projectDetails = null;
+    
+    try {
+      if (document.project_id) {
+        // Use admin client for database operations
+        const supabase = supabaseAdmin;
+        
+        // Define interface for project data
+        interface ProjectData {
+          id: string;
+          name: string;
+          url: string;
+          created_at: string;
+          updated_at: string;
+          is_active: boolean;
+          user_id: string;
+          brand_name?: string;
+          business_type?: string;
+          user?: {
+            id: string;
+            email: string;
+            name: string;
+            avatar: string | null;
+          };
+        }
+        
+        // Fetch the specific project with the given ID
+        const { data: project, error: fetchError } = await supabase
+          .from('projects')
+          .select('id, name, url, created_at, updated_at, is_active, user_id, brand_name, business_type')
+          .eq('id', document.project_id)
+          .single();
+        
+        if (fetchError) {
+          console.error('Error fetching project from Supabase:', fetchError);
+        } else if (project) {
+          projectDetails = project as ProjectData;
+          
+          // Fetch user details
+          if (project.user_id) {
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+            const authApiUrl = `${supabaseUrl}/auth/v1/admin/users`;
+            
+            try {
+              const response = await fetch(authApiUrl, {
+                method: 'GET',
+                headers: getSecureHeaders()
+              });
+              
+              if (response.ok) {
+                const userData = await response.json();
+                
+                if (userData && userData.users) {
+                  const user = userData.users.find((u: any) => u.id === project.user_id);
+                  
+                  if (user) {
+                    projectDetails.user = {
+                      id: user.id,
+                      email: user.email,
+                      name: user.user_metadata?.full_name || user.user_metadata?.name || 'Unknown',
+                      avatar: user.user_metadata?.avatar_url || null
+                    };
+                  } else {
+                    projectDetails.user = {
+                      id: project.user_id,
+                      email: 'Unknown',
+                      name: 'Unknown User',
+                      avatar: null
+                    };
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Error fetching user details:', error);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching project details:', error);
+    }
+    
+    // Helper function to convert UTC to IST
+    const convertToIST = (utcDateString: string | Date): string => {
+      try {
+        const date = new Date(utcDateString);
+        // IST is UTC+5:30
+        return date.toLocaleString('en-IN', { 
+          timeZone: 'Asia/Kolkata',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        });
+      } catch (error) {
+        console.error('Error converting date to IST:', error);
+        return utcDateString instanceof Date ? utcDateString.toISOString() : String(utcDateString);
+      }
+    };
+    
+    // Convert dates to IST
+    const created_at_ist = document.created_at ? convertToIST(document.created_at) : null;
+    const updated_at_ist = document.updated_at ? convertToIST(document.updated_at) : null;
+    
+    // Enhance the document with project details and IST timestamps
+    const enhancedDocument = {
+      ...document,
+      created_at_ist,
+      updated_at_ist,
+      project_details: projectDetails
+    };
+    
+    return NextResponse.json({
+      success: true,
+      data: enhancedDocument
+    });
+  } catch (error) {
+    console.error('Error fetching blog post:', error);
+    const apiError = error as ApiError;
+    
+    // Handle specific MongoDB error codes
+    if (apiError.code === '11000') {
+      return NextResponse.json(
+        { success: false, error: 'Duplicate key error' },
+        { status: 400 }
+      );
+    }
+    
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'An error occurred while fetching blog post' 
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+): Promise<NextResponse> {
+  // Get the blog ID from the URL params
+  const { id } = params;
+  // Verify authentication
+  const auth = await verifyAuth(request);
+  
+  // Return 401 if not authenticated
+  if (!auth) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+  try {
+    const id = params.id;
+    
+    // Validate ID
+    if (!id || !ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid ID format' },
+        { status: 400 }
+      );
+    }
+    
+    // Parse request body
+    const body = await request.json();
+    
+    // Add updated timestamp
+    const updateData = {
+      ...body,
+      updated_at: new Date()
+    };
+    
+    // Convert published_date to Date if it exists
+    if (updateData.published_date) {
+      updateData.published_date = new Date(updateData.published_date);
+    }
+    
+    // Connect to MongoDB
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME);
+    const collection = db.collection('blogs');
+    
+    // Update the document
+    const result = await collection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updateData }
+    );
+    
+    if (result.matchedCount === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Blog post not found' },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Blog post updated successfully',
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Error updating blog post:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'An error occurred while updating blog post' 
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+): Promise<NextResponse> {
+  // Get the blog ID from the URL params
+  const { id } = params;
+  // Verify authentication
+  const auth = await verifyAuth(request);
+  
+  // Return 401 if not authenticated
+  if (!auth) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+  try {
+    const id = params.id;
+    
+    // Validate ID
+    if (!id || !ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid ID format' },
+        { status: 400 }
+      );
+    }
+    
+    // Connect to MongoDB
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME);
+    const collection = db.collection('blogs');
+    
+    // Delete the document
+    const result = await collection.deleteOne({ _id: new ObjectId(id) });
+    
+    if (result.deletedCount === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Blog post not found' },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Blog post deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting blog post:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'An error occurred while deleting blog post' 
+      },
+      { status: 500 }
+    );
+  }
+}

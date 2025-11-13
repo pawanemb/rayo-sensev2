@@ -60,6 +60,8 @@ interface PaginationInfo {
 
 export default function ProjectsPage() {
   const router = useRouter();
+
+  // No wrapper div needed - layout provides padding
   const [projects, setProjects] = useState<Project[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({
     currentPage: 1,
