@@ -1,7 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 import { supabaseAdmin, getSecureHeaders } from '@/lib/supabase/admin';
-import cache, { getBlogListCacheKey } from '@/lib/cache';
 
 // Helper function to verify authentication
 const verifyAuth = async (request: NextRequest) => {
@@ -22,19 +21,6 @@ const verifyAuth = async (request: NextRequest) => {
     return null;
   }
 };
-
-// Interface for blog post data
-interface BlogPost {
-  _id: string;
-  title: string;
-  project_id: string;
-  word_count: number;
-  created_at: Date;
-  updated_at: Date;
-  user_id: string;
-  status: string;
-  [key: string]: any; // Allow for flexible schema
-}
 
 export async function GET(request: NextRequest) {
   console.log(`[BLOGS/LIST] API request received at ${new Date().toISOString()}`);
@@ -61,26 +47,8 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')?.trim() || '';
     const sortField = searchParams.get('sort') || 'created_at';
     const sortOrder = searchParams.get('order') === 'asc' ? 1 : -1;
-    const showDeleted = searchParams.get('show_deleted') === 'true'; // Option to show deleted blogs
 
     console.log(`[BLOGS/LIST] Query params - page: ${page}, limit: ${limit}, search: "${search}", sort: ${sortField}, order: ${sortOrder}`);
-
-    // Check cache first (shorter TTL for search results)
-    const cacheKey = getBlogListCacheKey({
-      page,
-      limit,
-      search,
-      sort: sortField,
-      order: sortOrder === 1 ? 'asc' : 'desc'
-    });
-
-    const cachedResult = cache.get(cacheKey);
-    if (cachedResult) {
-      console.log(`[BLOGS/LIST] Cache hit for key: ${cacheKey}`);
-      return NextResponse.json(cachedResult);
-    }
-
-    console.log(`[BLOGS/LIST] Cache miss for key: ${cacheKey}`);
 
     console.log(`[BLOGS/LIST] Connecting to MongoDB...`);
     const client = await clientPromise;
@@ -89,10 +57,9 @@ export async function GET(request: NextRequest) {
     console.log(`[BLOGS/LIST] Connected to MongoDB database: ${process.env.MONGODB_DB_NAME}`);
     
     // Build search filter
-    let searchFilter: any = {};
-    
+    let searchFilter: Record<string, unknown> = {};
+
     // Show all blogs (both active and inactive) by default
-    // The showDeleted parameter is kept for future use but we now show all blogs
     
     // Add search criteria if provided
     if (search) {
@@ -169,7 +136,7 @@ export async function GET(request: NextRequest) {
     
     // Fetch project details from Supabase
     console.log(`[BLOGS/LIST] Fetching project details from Supabase...`);
-    let projectDetails: Record<string, any> = {};
+    const projectDetails: Record<string, unknown> = {};
     try {
       const { data: projects, error } = await supabaseAdmin
         .from('projects')
@@ -205,9 +172,9 @@ export async function GET(request: NextRequest) {
     }
     
     console.log(`[BLOGS/LIST] Final userIds for fetching user details: ${userIds.length} IDs: ${userIds.join(', ')}`);
-    
+
     // Fetch user details efficiently - only for users we need
-    let userDetails: Record<string, any> = {};
+    const userDetails: Record<string, unknown> = {};
     if (userIds.length > 0) {
       try {
         console.log(`[BLOGS/LIST] Fetching user details for ${userIds.length} specific users`);
@@ -308,10 +275,10 @@ export async function GET(request: NextRequest) {
     
     // Enhance blog posts with project and user details
     console.log(`[BLOGS/LIST] Enhancing ${blogPosts.length} blog posts with project and user details`);
-    
-    const enhancedBlogs = blogPosts.map((blog: any) => {
+
+    const enhancedBlogs = blogPosts.map((blog) => {
       // Get project details
-      const projectDetail = projectDetails[blog.project_id] || {
+      const projectDetail = (projectDetails[blog.project_id] as { id: string; name: string; url: string; user_id: string }) || {
         id: blog.project_id,
         name: 'Unknown Project',
         url: '',
@@ -352,19 +319,20 @@ export async function GET(request: NextRequest) {
     });
     
     // Count blogs with user details
-    const blogsWithUserDetails = enhancedBlogs.filter(blog => 
-      blog.user_details && blog.user_details.id && blog.user_details.name !== 'Unknown User'
+    const blogsWithUserDetails = enhancedBlogs.filter(blog =>
+      blog.user_details && (blog.user_details as { id?: string; name?: string }).id && (blog.user_details as { id?: string; name?: string }).name !== 'Unknown User'
     ).length;
     
     console.log(`[BLOGS/LIST] Enhanced ${enhancedBlogs.length} blogs, ${blogsWithUserDetails} have complete user details`);
     
     // Log a sample of the enhanced blogs
     if (enhancedBlogs.length > 0) {
+      const sample = enhancedBlogs[0] as { _id: unknown; title?: string; project_details: unknown; user_details: unknown };
       console.log(`[BLOGS/LIST] Sample enhanced blog:`, JSON.stringify({
-        _id: enhancedBlogs[0]._id,
-        title: enhancedBlogs[0].title,
-        project_details: enhancedBlogs[0].project_details,
-        user_details: enhancedBlogs[0].user_details
+        _id: sample._id,
+        title: sample.title,
+        project_details: sample.project_details,
+        user_details: sample.user_details
       }));
     }
     
@@ -392,10 +360,6 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    // Cache the response (shorter TTL for search results, longer for regular listing)
-    const cacheTTL = search ? 60 : 300; // 1 minute for search, 5 minutes for regular listing
-    cache.set(cacheKey, responseData, cacheTTL);
-    
     return NextResponse.json(responseData);
   } catch (error) {
     console.error('[BLOGS/LIST] Error fetching blog list:', error);

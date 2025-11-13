@@ -49,13 +49,13 @@ export default function AdminLayoutClient({
       <Backdrop />
       {/* Main Content Area */}
       <div
-        className={`flex min-h-screen w-full flex-col transition-all duration-300 ease-in-out ${mainContentMargin}`}
+        className={`flex min-h-screen w-full flex-col border-l border-gray-200 transition-all duration-300 ease-in-out dark:border-gray-800 ${mainContentMargin}`}
       >
         {/* Header */}
         <AppHeader />
         {/* Page Content */}
         <main className="flex-1">
-          <div className="mx-auto w-full">{children}</div>
+          <div className="mx-auto w-full px-6 py-6">{children}</div>
         </main>
       </div>
     </div>

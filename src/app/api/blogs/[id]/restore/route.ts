@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { ObjectId } from 'mongodb';
-import cache from '@/lib/cache';
 
 // Helper function to verify authentication
 const verifyAuth = async (request: NextRequest) => {
@@ -30,10 +29,11 @@ const verifyAuth = async (request: NextRequest) => {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  console.log(`[BLOG/RESTORE] Restore request for blog ID: ${params.id}`);
-  
+  const resolvedParams = await params;
+  console.log(`[BLOG/RESTORE] Restore request for blog ID: ${resolvedParams.id}`);
+
   // Verify authentication and admin role
   const auth = await verifyAuth(request);
   if (!auth) {
@@ -44,7 +44,7 @@ export async function POST(
     );
   }
 
-  const { id } = params;
+  const { id } = resolvedParams;
 
   // Validate blog ID
   if (!id) {
@@ -125,10 +125,6 @@ export async function POST(
 
     console.log(`[BLOG/RESTORE] Successfully restored blog: ${id}`);
 
-    // Invalidate blog-related cache
-    cache.invalidatePattern('blogs:');
-    console.log(`[BLOG/RESTORE] Invalidated blog cache after restoration`);
-
     return NextResponse.json({
       success: true,
       message: 'Blog restored successfully',
@@ -153,7 +149,7 @@ export async function POST(
 // Alternative PUT method
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return POST(request, { params });
 }

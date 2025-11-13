@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { ObjectId } from 'mongodb';
-import cache from '@/lib/cache';
 
 // Helper function to verify authentication
 const verifyAuth = async (request: NextRequest) => {
@@ -30,10 +29,11 @@ const verifyAuth = async (request: NextRequest) => {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  console.log(`[BLOG/DELETE] Delete request for blog ID: ${params.id}`);
-  
+  const resolvedParams = await params;
+  console.log(`[BLOG/DELETE] Delete request for blog ID: ${resolvedParams.id}`);
+
   // Verify authentication and admin role
   const auth = await verifyAuth(request);
   if (!auth) {
@@ -44,7 +44,7 @@ export async function POST(
     );
   }
 
-  const { id } = params;
+  const { id } = resolvedParams;
 
   // Validate blog ID
   if (!id) {
@@ -121,10 +121,6 @@ export async function POST(
 
     console.log(`[BLOG/DELETE] Successfully soft deleted blog: ${id}`);
 
-    // Invalidate blog-related cache
-    cache.invalidatePattern('blogs:');
-    console.log(`[BLOG/DELETE] Invalidated blog cache after deletion`);
-
     return NextResponse.json({
       success: true,
       message: 'Blog deleted successfully',
@@ -149,7 +145,7 @@ export async function POST(
 // Alternative DELETE method (some clients prefer DELETE over POST)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return POST(request, { params });
 }

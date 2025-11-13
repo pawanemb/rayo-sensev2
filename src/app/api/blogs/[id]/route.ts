@@ -4,17 +4,18 @@ import { ObjectId } from 'mongodb';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  console.log(`[BLOGS/ID] API request received for blog ID: ${params.id} at ${new Date().toISOString()}`);
+  const resolvedParams = await params;
+  console.log(`[BLOGS/ID] API request received for blog ID: ${resolvedParams.id} at ${new Date().toISOString()}`);
 
   try {
     // Validate the blog ID
     let blogId;
     try {
-      blogId = new ObjectId(params.id);
-    } catch (error) {
-      console.error(`[BLOGS/ID] Invalid blog ID format: ${params.id}`);
+      blogId = new ObjectId(resolvedParams.id);
+    } catch {
+      console.error(`[BLOGS/ID] Invalid blog ID format: ${resolvedParams.id}`);
       return NextResponse.json(
         { success: false, error: 'Invalid blog ID format' },
         { status: 400 }
@@ -27,13 +28,13 @@ export async function GET(
     const db = client.db(process.env.MONGODB_DB_NAME);
     const collection = db.collection('blogs');
     console.log(`[BLOGS/ID] Connected to MongoDB database: ${process.env.MONGODB_DB_NAME}, collection: blogs`);
-    
+
     // Get the specific blog post by ID
-    console.log(`[BLOGS/ID] Fetching blog post with ID: ${params.id}`);
+    console.log(`[BLOGS/ID] Fetching blog post with ID: ${resolvedParams.id}`);
     const blogPost = await collection.findOne({ _id: blogId });
-    
+
     if (!blogPost) {
-      console.log(`[BLOGS/ID] Blog post with ID ${params.id} not found`);
+      console.log(`[BLOGS/ID] Blog post with ID ${resolvedParams.id} not found`);
       return NextResponse.json(
         { success: false, error: 'Blog post not found' },
         { status: 404 }
@@ -70,17 +71,18 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  console.log(`[BLOGS/ID] PUT request received for blog ID: ${params.id} at ${new Date().toISOString()}`);
+  const resolvedParams = await params;
+  console.log(`[BLOGS/ID] PUT request received for blog ID: ${resolvedParams.id} at ${new Date().toISOString()}`);
 
   try {
     // Validate the blog ID
     let blogId;
     try {
-      blogId = new ObjectId(params.id);
-    } catch (error) {
-      console.error(`[BLOGS/ID] Invalid blog ID format: ${params.id}`);
+      blogId = new ObjectId(resolvedParams.id);
+    } catch {
+      console.error(`[BLOGS/ID] Invalid blog ID format: ${resolvedParams.id}`);
       return NextResponse.json(
         { success: false, error: 'Invalid blog ID format' },
         { status: 400 }
@@ -105,7 +107,7 @@ export async function PUT(
     const collection = db.collection('blogs');
     
     // Build update object
-    const updateFields: any = {
+    const updateFields: Record<string, string | number | undefined> = {
       updated_at: new Date().toISOString()
     };
     
@@ -114,21 +116,21 @@ export async function PUT(
     if (word_count !== undefined) updateFields.word_count = word_count;
     
     // Update the blog post
-    console.log(`[BLOGS/ID] Updating blog post with ID: ${params.id}`);
+    console.log(`[BLOGS/ID] Updating blog post with ID: ${resolvedParams.id}`);
     const updateResult = await collection.updateOne(
       { _id: blogId },
       { $set: updateFields }
     );
     
     if (updateResult.matchedCount === 0) {
-      console.log(`[BLOGS/ID] Blog post with ID ${params.id} not found for update`);
+      console.log(`[BLOGS/ID] Blog post with ID ${resolvedParams.id} not found for update`);
       return NextResponse.json(
         { success: false, error: 'Blog post not found' },
         { status: 404 }
       );
     }
     
-    console.log(`[BLOGS/ID] Successfully updated blog post: ${params.id}`);
+    console.log(`[BLOGS/ID] Successfully updated blog post: ${resolvedParams.id}`);
     
     return NextResponse.json({
       success: true,

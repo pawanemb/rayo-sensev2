@@ -118,9 +118,9 @@ export function getCountryFlag(countryCode: string): string {
       .toUpperCase()
       .split('')
       .map(char => 127397 + char.charCodeAt(0));
-    
+
     return String.fromCodePoint(...codePoints);
-  } catch (error) {
+  } catch {
     return '🌐'; // Fallback if flag conversion fails
   }
 }

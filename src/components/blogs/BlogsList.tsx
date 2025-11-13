@@ -288,27 +288,25 @@ export default function BlogsList() {
 
       <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div className="max-w-full overflow-x-auto">
-          <div className="min-w-[1200px]">
+          <div className="min-w-[1000px]">
             <Table>
               <TableHeader className="border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-white/5 dark:text-gray-400">
                 <TableRow>
                   <TableCell className="px-5 py-4">Blog Title</TableCell>
                   <TableCell className="px-5 py-4">Project</TableCell>
                   <TableCell className="px-5 py-4">Owner</TableCell>
-                  <TableCell className="px-5 py-4">Words</TableCell>
-                  <TableCell className="px-5 py-4">Status</TableCell>
                   <TableCell className="px-5 py-4">Blog ID</TableCell>
                   <TableCell className="px-5 py-4">Created</TableCell>
                   <TableCell className="px-5 py-4">Actions</TableCell>
                 </TableRow>
               </TableHeader>
               {isLoading ? (
-                <TableSkeleton rows={10} columns={8} />
+                <TableSkeleton rows={10} columns={6} />
               ) : (
                 <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
                   {blogs.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="px-5 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                      <TableCell colSpan={6} className="px-5 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
                         {searchTerm ? 'No blogs found matching your search.' : 'No blogs found.'}
                       </TableCell>
                     </TableRow>
@@ -324,7 +322,10 @@ export default function BlogsList() {
                             <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
                               {blog.title}
                             </p>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                {(blog.word_count || 0).toLocaleString()} words
+                              </span>
                               {getStatusBadge(blog.status)}
                               {getActiveBadge(blog.is_active)}
                             </div>
@@ -389,14 +390,6 @@ export default function BlogsList() {
                           ) : (
                             <span className="text-xs text-gray-400">Unknown User</span>
                           )}
-                        </TableCell>
-                        <TableCell className="px-5 py-4">
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {(blog.word_count || 0).toLocaleString()}
-                          </span>
-                        </TableCell>
-                        <TableCell className="px-5 py-4">
-                          {getStatusBadge(blog.status)}
                         </TableCell>
                         <TableCell className="px-5 py-4">
                           <div className="flex items-center gap-2">

@@ -1,8 +1,17 @@
-import { NextResponse, NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 
+interface Blog {
+  _id: unknown;
+  title?: string;
+  project_id?: string;
+  user_id?: string;
+  created_at?: string;
+  words_count?: number;
+}
+
 // GET endpoint to fetch blog data with limited fields
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Connect to MongoDB
     const client = await clientPromise;
@@ -49,7 +58,7 @@ export async function GET(request: NextRequest) {
 }
 
 // Helper function to calculate monthly blog statistics
-function calculateMonthlyStats(blogs: any[]) {
+function calculateMonthlyStats(blogs: Blog[]) {
   const monthlyStats: Record<string, { month: string, count: number }> = {};
   
   blogs.forEach(blog => {
@@ -73,7 +82,7 @@ function calculateMonthlyStats(blogs: any[]) {
 }
 
 // Helper function to calculate top blog creators based on user_id in the blog documents
-function calculateTopBlogCreators(blogs: any[]) {
+function calculateTopBlogCreators(blogs: Blog[]) {
   const creatorStats: Record<string, { 
     user_id: string,
     count: number

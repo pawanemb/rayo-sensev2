@@ -12,12 +12,6 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
-import Pagination from '@/components/ui/Pagination';
-
-interface BlogOverviewProps {
-  data: any;
-}
-
 interface Blog {
   _id: string;
   title: string;
@@ -42,7 +36,7 @@ interface Blog {
     name: string;
     avatar: string | null;
   };
-  [key: string]: any; // Allow string indexing for dynamic field access
+  [key: string]: unknown; // Allow string indexing for dynamic field access
 }
 
 interface PaginationInfo {
@@ -68,7 +62,7 @@ interface ApiResponse {
   };
 }
 
-export default function TotalBlogsOverview({ data }: BlogOverviewProps) {
+export default function TotalBlogsOverview() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -219,9 +213,8 @@ export default function TotalBlogsOverview({ data }: BlogOverviewProps) {
         })
       );
 
-      const results = await Promise.all(deletePromises);
-      const successCount = results.filter(response => response.ok).length;
-      
+      await Promise.all(deletePromises);
+
       // Refresh the blogs list
       fetchBlogs(currentPage, searchQuery, sortField, sortDirection);
       
@@ -260,9 +253,8 @@ export default function TotalBlogsOverview({ data }: BlogOverviewProps) {
         })
       );
 
-      const results = await Promise.all(restorePromises);
-      const successCount = results.filter(response => response.ok).length;
-      
+      await Promise.all(restorePromises);
+
       // Refresh the blogs list
       fetchBlogs(currentPage, searchQuery, sortField, sortDirection);
       
@@ -305,29 +297,6 @@ export default function TotalBlogsOverview({ data }: BlogOverviewProps) {
         return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
-    }
-  };
-
-  // Get word count badge
-  const getWordCountBadge = (count: number) => {
-    if (count <= 1000) {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#EDEEF3] text-black-800 dark:bg-blue-900/30 dark:text-blue-400">
-          1000 words
-        </span>
-      );
-    } else if (count <= 1500) {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
-          1500 words
-        </span>
-      );
-    } else {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400">
-          2500 words
-        </span>
-      );
     }
   };
 
