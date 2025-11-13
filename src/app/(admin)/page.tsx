@@ -10,8 +10,8 @@ import ActiveUsers from "@/components/dashboard/ActiveUsers";
 
 export const metadata: Metadata = {
   title:
-    "Rayo E-commerce Dashboard ",
-  description: "This is Rayo Home for Rayo ",
+    "Rayo Dashboard ",
+  description: "This is Rayo ",
 };
 
 export default function Ecommerce() {
