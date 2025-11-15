@@ -7,7 +7,7 @@ import { normalizeUser } from "@/lib/users/transform";
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
-) {
+): Promise<NextResponse> {
   const { id: projectId } = params;
 
   try {
