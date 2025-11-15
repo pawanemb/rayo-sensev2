@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FaCopy, FaCheckCircle, FaTimesCircle, FaPen, FaExternalLinkAlt, FaWordpress, FaUser } from "react-icons/fa";
+import { FaCopy, FaCheckCircle, FaTimesCircle, FaExternalLinkAlt, FaWordpress, FaUser } from "react-icons/fa";
 import { SiShopify } from "react-icons/si";
 import { FcGoogle } from "react-icons/fc";
 import { Skeleton } from "@/components/ui/skeleton";

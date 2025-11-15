@@ -26,7 +26,7 @@ interface ProjectData {
   user_id: string;
   cms_config: unknown;
   background_image: string | null;
-  brand_tone_settings: unknown;
+  brand_tone_settings: Record<string, string>;
   featured_image_style: string | null;
   feature_image_active: boolean;
   pinned: boolean;

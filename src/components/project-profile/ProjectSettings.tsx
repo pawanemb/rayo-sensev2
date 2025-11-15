@@ -9,7 +9,7 @@ interface ProjectData {
   featured_image_style: string | null;
   person_tone: string | null;
   pinned: boolean;
-  brand_tone_settings: any;
+  brand_tone_settings: Record<string, string>;
 }
 
 interface ProjectSettingsProps {

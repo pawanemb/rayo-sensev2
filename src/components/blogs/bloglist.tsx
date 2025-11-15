@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaSort, FaSearch, FaTrash } from 'react-icons/fa';
 import { generateAvatar } from "@/utils/avatar";
@@ -125,7 +126,7 @@ export default function TotalBlogsOverview() {
   // Initial load
   useEffect(() => {
     fetchBlogs(currentPage, searchQuery, sortField, sortDirection);
-  }, []);
+  }, [currentPage, fetchBlogs, searchQuery, sortField, sortDirection]);
 
   // Handle search with debouncing
   useEffect(() => {
@@ -141,11 +142,11 @@ export default function TotalBlogsOverview() {
     setSearchTimeout(timeout);
 
     return () => {
-      if (searchTimeout) {
-        clearTimeout(searchTimeout);
+      if (timeout) {
+        clearTimeout(timeout);
       }
     };
-  }, [searchQuery, fetchBlogs, sortField, sortDirection]);
+  }, [searchQuery, fetchBlogs, sortField, sortDirection, searchTimeout]);
 
   // Since we're using server-side pagination, filtering, and sorting,
   // we use the data directly from the API response
@@ -521,9 +522,11 @@ export default function TotalBlogsOverview() {
                         {/* Project */}
                         <div className="flex items-center space-x-2">
                           <div className="flex-shrink-0 h-6 w-6 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full">
-                            <img 
+                            <Image 
                               src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(blog.project_details?.url || '')}&sz=16`}
                               alt="favicon"
+                              width={16}
+                              height={16}
                               className="h-4 w-4"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = 'none';
@@ -544,9 +547,11 @@ export default function TotalBlogsOverview() {
                         
                         {/* User */}
                         <div className="flex items-center space-x-2">
-                          <img 
+                          <Image 
                             src={blog.user_details?.avatar || (blog.user_details?.name ? generateAvatar(blog.user_details.name) : generateAvatar('Unknown User'))}
                             alt={blog.user_details?.name || 'Unknown User'} 
+                            width={24}
+                            height={24}
                             className="h-6 w-6 rounded-full flex-shrink-0 border border-gray-200 dark:border-gray-600"
                             onError={(e) => {
                               if (blog.user_details?.name) {
@@ -725,9 +730,11 @@ export default function TotalBlogsOverview() {
                     >
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-full">
-                          <img 
+                          <Image 
                             src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(blog.project_details?.url || '')}&sz=32`}
                             alt="favicon"
+                            width={20}
+                            height={20}
                             className="h-5 w-5 flex-shrink-0"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = 'none';
@@ -751,9 +758,11 @@ export default function TotalBlogsOverview() {
                       onClick={() => navigateToBlog(blog._id)}
                     >
                       <div className="flex items-center">
-                        <img 
+                        <Image 
                           src={blog.user_details?.avatar || (blog.user_details?.name ? generateAvatar(blog.user_details.name) : generateAvatar('Unknown User'))}
                           alt={blog.user_details?.name || 'Unknown User'} 
+                          width={36}
+                          height={36}
                           className="h-9 w-9 rounded-full mr-3 flex-shrink-0 border-2 border-white dark:border-gray-800 shadow-sm"
                           onError={(e) => {
                             if (blog.user_details?.name) {
