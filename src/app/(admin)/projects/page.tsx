@@ -333,9 +333,12 @@ export default function ProjectsPage() {
                     </TableRow>
                   ) : (
                     projects.map((project) => (
-                      <TableRow 
+                      <TableRow
                         key={project.id}
-                        onClick={() => router.push(`/projects/${project.id}`)}
+                        onClick={() => {
+                          console.log('Navigating to project:', project.id);
+                          router.push(`/projects/${project.id}`);
+                        }}
                         className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                       >
                         <TableCell className="px-5 py-4">
