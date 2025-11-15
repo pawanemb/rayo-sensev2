@@ -6,9 +6,10 @@ import { normalizeUser } from "@/lib/users/transform";
 
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
-  const { id: projectId } = context.params;
+  const resolvedParams = await params;
+  const { id: projectId } = resolvedParams;
 
   try {
     console.log(`[PROJECT/${projectId}] API request received`);
