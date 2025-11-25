@@ -159,3 +159,20 @@ export const deleteUser = async (id: string): Promise<void> => {
     throw new Error(payload.error || "Failed to delete user");
   }
 };
+
+export const getAllUsersForExport = async (): Promise<User[]> => {
+  const allUsers: User[] = [];
+  let page = 1;
+  const limit = 50; // Fetch 50 users per request
+  let hasMore = true;
+
+  while (hasMore) {
+    const response = await getUsers({ page, limit });
+    allUsers.push(...response.users);
+
+    hasMore = response.pagination.hasNextPage;
+    page++;
+  }
+
+  return allUsers;
+};
