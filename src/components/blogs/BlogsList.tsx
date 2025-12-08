@@ -19,7 +19,7 @@ import { Modal } from "@/components/ui/modal";
 interface Blog {
   _id: string;
   title: string;
-  word_count: number;
+  word_count: number | string | number[]; // Can be number, string, or array of numbers
   project_id: string;
   created_at: string;
   updated_at: string;
@@ -49,6 +49,22 @@ interface PaginationInfo {
   hasPrev: boolean;
   showing: number;
 }
+
+// Helper function to get word count from various formats
+const getWordCount = (wordCount: number | string | number[] | undefined): number => {
+  if (!wordCount) return 0;
+
+  if (Array.isArray(wordCount)) {
+    // If array, get the latest (last) value
+    return wordCount[wordCount.length - 1] || 0;
+  } else if (typeof wordCount === 'string') {
+    // If string, parse it
+    return parseInt(wordCount) || 0;
+  } else {
+    // If number, use it directly
+    return wordCount || 0;
+  }
+};
 
 export default function BlogsList() {
   const router = useRouter();
@@ -324,7 +340,7 @@ export default function BlogsList() {
                             </p>
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                                {(blog.word_count || 0).toLocaleString()} words
+                                {getWordCount(blog.word_count).toLocaleString()} words
                               </span>
                               {getStatusBadge(blog.status)}
                               {getActiveBadge(blog.is_active)}

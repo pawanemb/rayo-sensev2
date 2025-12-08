@@ -16,7 +16,7 @@ import {
 interface Blog {
   _id: string;
   title: string;
-  word_count: number;
+  word_count: number | string | number[]; // Can be number, string, or array of numbers
   project_id: string;
   created_at: string;
   updated_at: string;
@@ -62,6 +62,22 @@ interface ApiResponse {
     timestamp: string;
   };
 }
+
+// Helper function to get word count from various formats
+const getWordCount = (wordCount: number | string | number[] | undefined): number => {
+  if (!wordCount) return 0;
+
+  if (Array.isArray(wordCount)) {
+    // If array, get the latest (last) value
+    return wordCount[wordCount.length - 1] || 0;
+  } else if (typeof wordCount === 'string') {
+    // If string, parse it
+    return parseInt(wordCount) || 0;
+  } else {
+    // If number, use it directly
+    return wordCount || 0;
+  }
+};
 
 export default function TotalBlogsOverview() {
   const router = useRouter();
@@ -501,7 +517,7 @@ export default function TotalBlogsOverview() {
                         </h3>
                         <div className="flex items-center space-x-2 mb-2">
                           <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {(blog.word_count || 0).toLocaleString()} words
+                            {getWordCount(blog.word_count).toLocaleString()} words
                           </span>
                           <div className="text-xs text-gray-400">•</div>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(blog.status)}`}>
@@ -714,7 +730,7 @@ export default function TotalBlogsOverview() {
                           </div>
                           <div className="flex items-center space-x-2 mt-1">
                             <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                              {(blog.word_count || 0).toLocaleString()} words
+                              {getWordCount(blog.word_count).toLocaleString()} words
                             </div>
                             <div className="text-xs text-gray-400">•</div>
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(blog.status)}`}>
