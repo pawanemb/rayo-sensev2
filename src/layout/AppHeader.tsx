@@ -1,5 +1,5 @@
 "use client";
-import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import UserDropdown from "@/components/header/UserDropdown";
 import { useSidebar } from "@/context/SidebarContext";
 import Image from "next/image";
@@ -111,7 +111,7 @@ const AppHeader: React.FC = () => {
         >
           <div className="flex items-center gap-2 2xsm:gap-3">
             {/* <!-- Dark Mode Toggler --> */}
-            <ThemeToggleButton />
+            <AnimatedThemeToggler />
             {/* <!-- Dark Mode Toggler --> */}
           </div>
           {/* <!-- User Area --> */}

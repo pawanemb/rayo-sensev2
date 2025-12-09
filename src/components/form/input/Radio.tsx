@@ -52,7 +52,7 @@ const Radio: React.FC<RadioProps> = ({
         }`}
       >
         <span
-          className={`h-2 w-2 rounded-full bg-white ${
+          className={`h-2 w-2 rounded-full bg-white dark:bg-gray-50 ${
             checked ? "block" : "hidden"
           }`}
         ></span>
