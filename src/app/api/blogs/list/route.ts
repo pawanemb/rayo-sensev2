@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import clientPromise from '@/lib/mongodb';
-import { supabaseAdmin, getSecureHeaders } from '@/lib/supabase/admin';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 // Helper function to verify authentication
 const verifyAuth = async (request: NextRequest) => {
@@ -179,73 +179,45 @@ export async function GET(request: NextRequest) {
       try {
         console.log(`[BLOGS/LIST] Fetching user details for ${userIds.length} specific users`);
         console.log(`[BLOGS/LIST] User IDs needed: ${userIds.join(', ')}`);
-        
-        // Use Supabase Admin SDK to fetch specific users more efficiently
-        const batchSize = 10; // Process users in batches to avoid API limits
-        const userBatches = [];
-        
-        for (let i = 0; i < userIds.length; i += batchSize) {
-          userBatches.push(userIds.slice(i, i + batchSize));
-        }
-        
-        console.log(`[BLOGS/LIST] Processing ${userBatches.length} batches of users`);
-        
-        for (let batchIndex = 0; batchIndex < userBatches.length; batchIndex++) {
-          const batch = userBatches[batchIndex];
-          console.log(`[BLOGS/LIST] Processing batch ${batchIndex + 1}/${userBatches.length} with ${batch.length} user IDs`);
-          
+
+        // Fetch users in parallel using getUserById - more reliable and faster
+        console.log(`[BLOGS/LIST] Fetching ${userIds.length} users in parallel`);
+
+        const usersPromises = userIds.map(async (userId) => {
           try {
-            // Use Supabase Admin API to get users by ID
-            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-            
-            for (const userId of batch) {
-              try {
-                const userResponse = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
-                  method: 'GET',
-                  headers: getSecureHeaders()
-                });
-                
-                if (userResponse.ok) {
-                  const userData = await userResponse.json();
-                  userDetails[userId] = {
-                    id: userData.id,
-                    email: userData.email,
-                    name: userData.user_metadata?.full_name || userData.user_metadata?.name || 'Unknown',
-                    avatar: userData.user_metadata?.avatar_url || null
-                  };
-                  console.log(`[BLOGS/LIST] Successfully fetched user ${userId}`);
-                } else {
-                  console.log(`[BLOGS/LIST] User ${userId} not found in Auth API, using fallback`);
-                  userDetails[userId] = {
-                    id: userId,
-                    email: 'Unknown',
-                    name: 'Unknown User',
-                    avatar: null
-                  };
-                }
-              } catch (userError) {
-                console.error(`[BLOGS/LIST] Error fetching individual user ${userId}:`, userError);
-                userDetails[userId] = {
-                  id: userId,
-                  email: 'Unknown',
-                  name: 'Unknown User',
-                  avatar: null
-                };
-              }
+            const { data: userData, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+            if (error || !userData) {
+              console.error(`[BLOGS/LIST] Error fetching user ${userId}:`, error);
+              return { userId, user: null };
             }
-          } catch (batchError) {
-            console.error(`[BLOGS/LIST] Error processing user batch ${batchIndex + 1}:`, batchError);
-            // Add fallback details for all users in this batch
-            batch.forEach(userId => {
-              userDetails[userId] = {
-                id: userId,
-                email: 'Unknown',
-                name: 'Unknown User',
-                avatar: null
-              };
-            });
+            console.log(`[BLOGS/LIST] Successfully fetched user ${userId}`);
+            return { userId, user: userData.user };
+          } catch (error) {
+            console.error(`[BLOGS/LIST] Error fetching user ${userId}:`, error);
+            return { userId, user: null };
           }
-        }
+        });
+
+        const userResults = await Promise.all(usersPromises);
+
+        userResults.forEach(({ userId, user }) => {
+          if (user) {
+            userDetails[userId] = {
+              id: user.id,
+              email: user.email || 'Unknown',
+              name: user.user_metadata?.full_name || user.user_metadata?.name || 'Unknown',
+              avatar: user.user_metadata?.avatar_url || null
+            };
+          } else {
+            // Fallback for failed user fetches
+            userDetails[userId] = {
+              id: userId,
+              email: 'Unknown',
+              name: 'Unknown User',
+              avatar: null
+            };
+          }
+        });
         
         console.log(`[BLOGS/LIST] Successfully processed user details for ${Object.keys(userDetails).length} users`)
       } catch (error) {

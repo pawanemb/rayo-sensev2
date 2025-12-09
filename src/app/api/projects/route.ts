@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError, requireAdmin } from "@/lib/auth/requireAdmin";
-import { normalizeUser } from "@/lib/users/transform";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 const DEFAULT_PER_PAGE = 10;
@@ -46,24 +45,36 @@ export async function GET(request: NextRequest) {
     // Get unique user IDs
     const userIds = [...new Set((projects || []).map(p => p.user_id).filter(Boolean))];
 
-    // Fetch user data from Supabase
+    // Fetch user data from Supabase - fetch individually for reliability
     const usersMap = new Map();
     if (userIds.length > 0) {
-      const { data: users, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
-      
-      if (!usersError && users) {
-        users.users.forEach(user => {
-          if (userIds.includes(user.id)) {
-            const normalized = normalizeUser(user);
-            usersMap.set(user.id, {
-              id: normalized.id,
-              name: normalized.name,
-              email: normalized.email || '',
-              avatar: normalized.avatar,
-            });
+      const usersPromises = userIds.map(async (userId) => {
+        try {
+          const { data: userData, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+          if (error || !userData) {
+            console.error(`Error fetching user ${userId}:`, error);
+            return null;
           }
-        });
-      }
+          return userData.user;
+        } catch (error) {
+          console.error(`Error fetching user ${userId}:`, error);
+          return null;
+        }
+      });
+
+      const userResults = await Promise.all(usersPromises);
+      const allUsers = userResults.filter(user => user !== null);
+
+      allUsers.forEach(user => {
+        if (user && user.id) {
+          usersMap.set(user.id, {
+            id: user.id,
+            email: user.email || 'Unknown',
+            name: user.user_metadata?.full_name || user.user_metadata?.name || 'Unknown',
+            avatar: user.user_metadata?.avatar_url || null
+          });
+        }
+      });
     }
 
     // Get GSC connection status for all projects

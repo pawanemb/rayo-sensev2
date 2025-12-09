@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { FaSearch, FaTimes } from "react-icons/fa";
+import { FaSearch, FaTimes, FaList, FaTh } from "react-icons/fa";
 import {
   getProjectImages,
   type ProjectImage,
@@ -31,6 +31,7 @@ export default function ImagesList() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [hoveredImage, setHoveredImage] = useState<{ filename: string; description: string | null; x: number; y: number } | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   // Filters
   const [userFilter, setUserFilter] = useState("");
@@ -136,24 +137,52 @@ export default function ImagesList() {
             </p>
           </div>
 
-          {/* Search Input - Inline */}
-          <div className="relative w-full lg:w-80">
-            <input
-              type="text"
-              className="h-10 w-full rounded-full border border-gray-200 bg-gray-50 pl-10 pr-10 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
-              placeholder="Search by project, user, or filename..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-            />
-            <FaSearch className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
-            {searchInput && (
+          <div className="flex items-center gap-3">
+            {/* View Toggle */}
+            <div className="flex rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-800">
               <button
-                onClick={handleClearFilters}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                onClick={() => setViewMode("list")}
+                className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  viewMode === "list"
+                    ? "bg-white text-brand-600 shadow-sm dark:bg-gray-900 dark:text-brand-400"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                }`}
               >
-                <FaTimes className="h-3.5 w-3.5" />
+                <FaList className="h-4 w-4" />
+                <span className="hidden sm:inline">List</span>
               </button>
-            )}
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  viewMode === "grid"
+                    ? "bg-white text-brand-600 shadow-sm dark:bg-gray-900 dark:text-brand-400"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                }`}
+              >
+                <FaTh className="h-4 w-4" />
+                <span className="hidden sm:inline">Grid</span>
+              </button>
+            </div>
+
+            {/* Search Input - Inline */}
+            <div className="relative w-full lg:w-80">
+              <input
+                type="text"
+                className="h-10 w-full rounded-full border border-gray-200 bg-gray-50 pl-10 pr-10 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+                placeholder="Search by project, user, or filename..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
+              <FaSearch className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+              {searchInput && (
+                <button
+                  onClick={handleClearFilters}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                >
+                  <FaTimes className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -168,25 +197,26 @@ export default function ImagesList() {
       )}
 
       {/* Images Grid/Table */}
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="max-w-full overflow-x-auto">
-          <div className="min-w-[960px]">
-            <Table>
-              <TableHeader className="border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-white/5 dark:text-gray-400">
-                <TableRow>
-                  <TableCell className="px-5 py-4">Preview</TableCell>
-                  <TableCell className="px-5 py-4">Filename</TableCell>
-                  <TableCell className="px-5 py-4">Project</TableCell>
-                  <TableCell className="px-5 py-4">User</TableCell>
-                  <TableCell className="px-5 py-4">Size / Dimensions</TableCell>
-                  <TableCell className="px-5 py-4">Category</TableCell>
-                  <TableCell className="px-5 py-4">Uploaded</TableCell>
-                </TableRow>
-              </TableHeader>
-              {isLoading ? (
-                <TableSkeleton rows={10} columns={7} />
-              ) : (
-                <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
+      {viewMode === "list" ? (
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="max-w-full overflow-x-auto">
+            <div className="min-w-[960px]">
+              <Table>
+                <TableHeader className="border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-white/5 dark:text-gray-400">
+                  <TableRow>
+                    <TableCell className="px-5 py-4">Preview</TableCell>
+                    <TableCell className="px-5 py-4">Filename</TableCell>
+                    <TableCell className="px-5 py-4">Project</TableCell>
+                    <TableCell className="px-5 py-4">User</TableCell>
+                    <TableCell className="px-5 py-4">Size / Dimensions</TableCell>
+                    <TableCell className="px-5 py-4">Category</TableCell>
+                    <TableCell className="px-5 py-4">Uploaded</TableCell>
+                  </TableRow>
+                </TableHeader>
+                {isLoading ? (
+                  <TableSkeleton rows={10} variant="images" />
+                ) : (
+                  <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
                   {images.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="px-5 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -345,6 +375,121 @@ export default function ImagesList() {
           </div>
         </div>
       </div>
+      ) : (
+        /* Grid View */
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          {isLoading ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 12 }).map((_, index) => (
+                <div key={index} className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                  <div className="aspect-square w-full bg-gray-100 dark:bg-gray-700 animate-pulse" />
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3 animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : images.length === 0 ? (
+            <div className="py-20 text-center">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {searchTerm
+                  ? "No images found. Try a different search term."
+                  : "No images have been uploaded yet."}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {images.map((image, index) => (
+                <div
+                  key={image.id}
+                  onClick={() => openLightbox(index)}
+                  className="group cursor-pointer overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:shadow-lg hover:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-brand-400"
+                  onMouseEnter={(e) => {
+                    if (image.description) {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setHoveredImage({
+                        filename: image.original_filename,
+                        description: image.description,
+                        x: rect.left + rect.width / 2,
+                        y: rect.top - 10,
+                      });
+                    }
+                  }}
+                  onMouseMove={(e) => {
+                    if (hoveredImage && image.description) {
+                      setHoveredImage({
+                        ...hoveredImage,
+                        x: e.clientX,
+                        y: e.clientY - 20,
+                      });
+                    }
+                  }}
+                  onMouseLeave={() => setHoveredImage(null)}
+                >
+                  {/* Image Preview */}
+                  <div className="relative aspect-square w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <Image
+                      src={image.public_url}
+                      alt={image.original_filename}
+                      fill
+                      className="object-cover transition-transform group-hover:scale-105"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                    />
+                  </div>
+
+                  {/* Card Content */}
+                  <div className="p-4 space-y-3">
+                    {/* Filename */}
+                    <h3 className="truncate text-sm font-medium text-gray-900 dark:text-white" title={image.original_filename}>
+                      {image.original_filename}
+                    </h3>
+
+                    {/* Project */}
+                    {image.project && (
+                      <div className="flex items-center gap-2">
+                        <div className="relative h-6 w-6 flex-shrink-0 overflow-hidden rounded border border-gray-100 dark:border-gray-700">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`https://www.google.com/s2/favicons?domain=${new URL(image.project.url).hostname}&sz=64`}
+                            alt={image.project.name}
+                            className="h-full w-full object-contain"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                        <p className="truncate text-xs text-gray-600 dark:text-gray-400">
+                          {image.project.name}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Category */}
+                    {image.category && (
+                      <span className="inline-flex rounded-full bg-brand-500/10 px-2 py-0.5 text-xs font-medium text-brand-600 dark:text-brand-300">
+                        {image.category}
+                      </span>
+                    )}
+
+                    {/* Meta Info */}
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {formatFileSize(image.file_size)}
+                      </span>
+                      {image.width && image.height && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {image.width} × {image.height}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Pagination */}
       {!isLoading && images.length > 0 && (
