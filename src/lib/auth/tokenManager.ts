@@ -121,13 +121,13 @@ class TokenManager {
     console.log('🧹 [TokenManager] All tokens cleared');
   }
 
-  setUserState(user: any): void {
+  setUserState(user: unknown): void {
     if (user) {
       setCookie(AUTH_STATE_COOKIE_NAME, JSON.stringify(user), 7);
     }
   }
 
-  getUserState(): any | null {
+  getUserState(): unknown | null {
     const userStr = getCookie(AUTH_STATE_COOKIE_NAME);
     if (!userStr) return null;
 
@@ -185,7 +185,7 @@ class TokenManager {
       const decoded = JSON.parse(jsonPayload);
 
       // Debug: Log the JWT payload structure once
-      if (typeof window !== 'undefined' && !window.__jwt_logged) {
+      if (typeof window !== 'undefined' && !(window as unknown as { __jwt_logged?: boolean }).__jwt_logged) {
         console.log('🔍 [JWT] Payload structure:', {
           has_role: !!decoded.role,
           has_user_metadata: !!decoded.user_metadata,
@@ -193,7 +193,7 @@ class TokenManager {
           user_metadata_role: decoded.user_metadata?.role,
           app_metadata_role: decoded.app_metadata?.role,
         });
-        (window as any).__jwt_logged = true;
+        (window as unknown as { __jwt_logged?: boolean }).__jwt_logged = true;
       }
 
       return decoded;
@@ -241,13 +241,20 @@ class TokenManager {
     return payload?.user_metadata?.avatar_url || payload?.user_metadata?.picture || null;
   }
 
-  updateTokensFromResponse(response: any): boolean {
-    if (response && response.access_token) {
+  updateTokensFromResponse(response: unknown): boolean {
+    if (response && typeof response === 'object' && 'access_token' in response) {
+      const tokenResponse = response as {
+        access_token: string;
+        refresh_token?: string;
+        expires_in?: number;
+        expires_at?: number;
+      };
+
       const newTokens: Tokens = {
-        access_token: response.access_token,
-        refresh_token: response.refresh_token || this.getRefreshToken() || undefined,
-        expires_in: response.expires_in,
-        expires_at: response.expires_at,
+        access_token: tokenResponse.access_token,
+        refresh_token: tokenResponse.refresh_token || this.getRefreshToken() || undefined,
+        expires_in: tokenResponse.expires_in,
+        expires_at: tokenResponse.expires_at,
       };
 
       this.setTokens(newTokens);

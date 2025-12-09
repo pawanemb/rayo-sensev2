@@ -68,8 +68,8 @@ const getErrorMessage = (error: unknown): string => {
 };
 
 // Process API responses and update tokens
-function processApiResponse<T>(response: any): T {
-  if (response && (response.access_token || response.refresh_token)) {
+function processApiResponse<T>(response: T): T {
+  if (response && typeof response === 'object' && ('access_token' in response || 'refresh_token' in response)) {
     console.log('🔄 [AUTH API] Response contains tokens, updating storage');
     tokenManager.updateTokensFromResponse(response);
   }

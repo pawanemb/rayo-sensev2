@@ -75,6 +75,13 @@ export async function POST(request: Request) {
     console.log('✅ [Refresh] Token refreshed successfully');
 
     // Return new tokens and user data
+    if (!data.user) {
+      return NextResponse.json(
+        { error: 'User data not found', detail: 'Unable to retrieve user information.' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       access_token: data.session.access_token,
       refresh_token: data.session.refresh_token,

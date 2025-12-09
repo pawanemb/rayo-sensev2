@@ -11,7 +11,6 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const initialize = useAuthStore((state) => state.initialize);
-  const initialized = useAuthStore((state) => state.initialized);
   const pathname = usePathname();
 
   // Check if we're on signin/login page

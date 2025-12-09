@@ -102,7 +102,10 @@ export async function GET(request: NextRequest) {
     });
     return NextResponse.json(response);
   } catch (error) {
-    console.error('❌ User Growth API Error:', error);
-    return handleApiError(error);
+    console.error('[USER-GROWTH] Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, error: 'An unexpected error occurred.' },
+      { status: 500 }
+    );
   }
 }

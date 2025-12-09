@@ -224,6 +224,10 @@ export async function GET(request: NextRequest) {
       data: response
     });
   } catch (error) {
-    return handleApiError(error);
+    console.error('[PROJECT-GROWTH] Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, error: 'An unexpected error occurred.' },
+      { status: 500 }
+    );
   }
 }

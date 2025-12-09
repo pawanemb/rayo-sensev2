@@ -162,7 +162,11 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    return handleApiError(error);
+    console.error('[USERS-LIST] Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, error: 'An unexpected error occurred.' },
+      { status: 500 }
+    );
   }
 }
 
@@ -190,6 +194,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ user: normalizeUser(data.user) }, { status: 201 });
   } catch (error) {
-    return handleApiError(error);
+    console.error('[USERS-CREATE] Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, error: 'An unexpected error occurred.' },
+      { status: 500 }
+    );
   }
 }

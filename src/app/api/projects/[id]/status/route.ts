@@ -30,6 +30,10 @@ export async function PATCH(
       message: `Project ${is_active ? 'activated' : 'deactivated'} successfully`,
     });
   } catch (error) {
-    return handleApiError(error);
+    console.error('[PROJECT-STATUS] Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, error: 'An unexpected error occurred.' },
+      { status: 500 }
+    );
   }
 }

@@ -105,6 +105,10 @@ export async function GET() {
       data: response
     });
   } catch (error) {
-    return handleApiError(error);
+    console.error('[ACTIVE-USERS] Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, error: 'An unexpected error occurred while fetching active users.' },
+      { status: 500 }
+    );
   }
 }

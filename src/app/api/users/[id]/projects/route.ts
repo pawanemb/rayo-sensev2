@@ -45,10 +45,14 @@ export async function GET(
       gsc_connected: gscMap.get(project.id) || false,
     }));
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       projects: projectsWithGSC
     });
   } catch (error) {
-    return handleApiError(error);
+    console.error('[USER-PROJECTS] Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, error: 'An unexpected error occurred.' },
+      { status: 500 }
+    );
   }
 }

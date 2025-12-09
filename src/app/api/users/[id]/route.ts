@@ -82,7 +82,11 @@ export async function GET(
       totalProjects: totalProjects || 0
     });
   } catch (error) {
-    return handleApiError(error);
+    console.error('[USER-DETAIL] Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, error: 'An unexpected error occurred.' },
+      { status: 500 }
+    );
   }
 }
 
@@ -109,7 +113,11 @@ export async function PATCH(
 
     return NextResponse.json({ user: normalizeUser(data.user) });
   } catch (error) {
-    return handleApiError(error);
+    console.error('[USER-UPDATE] Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, error: 'An unexpected error occurred.' },
+      { status: 500 }
+    );
   }
 }
 
@@ -123,6 +131,10 @@ export async function DELETE(
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (error) {
-    return handleApiError(error);
+    console.error('[USER-DELETE] Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, error: 'An unexpected error occurred.' },
+      { status: 500 }
+    );
   }
 }

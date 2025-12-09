@@ -167,7 +167,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
             set({ user: null, isAdmin: false });
           }
         }
-      } catch (error) {
+      } catch {
         console.log('ℹ️ [AuthStore] Session initialization completed with no valid session');
         // Don't mark as logged out on init errors - just clear invalid state
         tokenManager.clearTokens();
@@ -300,7 +300,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         const isAuthError = error &&
           typeof error === 'object' &&
           'response' in error &&
-          (error as any).response?.status === 401;
+          (error as { response?: { status?: number } }).response?.status === 401;
 
         if (isAuthError) {
           tokenManager.setLoggedOut();

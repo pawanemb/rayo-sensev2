@@ -52,6 +52,10 @@ export async function GET() {
     });
 
   } catch (error) {
-    return handleApiError(error);
+    console.error('[PROJECTS-RECENT] Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, error: 'An unexpected error occurred.' },
+      { status: 500 }
+    );
   }
 }

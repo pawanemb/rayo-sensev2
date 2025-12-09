@@ -13,9 +13,6 @@ export async function GET(
   try {
     console.log(`[PROJECT/${projectId}] API request received`);
 
-    // Require admin authentication
-    console.log(`[PROJECT/${projectId}] Auth passed for user: ${auth?.id}`);
-
     // Step 1: Fetch project details from Supabase
     const { data: project, error: projectError } = await supabaseAdmin
       .from('projects')
@@ -140,6 +137,10 @@ export async function GET(
       console.error(`[PROJECT/${projectId}] Error message:`, error.message);
       console.error(`[PROJECT/${projectId}] Error stack:`, error.stack);
     }
-    return handleApiError(error);
+    console.error('[PROJECT-DETAIL] Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, error: 'An unexpected error occurred.' },
+      { status: 500 }
+    );
   }
 }

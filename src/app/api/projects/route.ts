@@ -127,6 +127,10 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    return handleApiError(error);
+    console.error('[PROJECTS-LIST] Unexpected error:', error);
+    return NextResponse.json(
+      { success: false, error: 'An unexpected error occurred.' },
+      { status: 500 }
+    );
   }
 }

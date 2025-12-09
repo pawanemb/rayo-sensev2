@@ -31,8 +31,8 @@ export default function SignInForm() {
       broadcastLogin();
       // Success - redirect to admin dashboard
       router.push('/');
-    } catch (err: any) {
-      setError(err.message || 'Sign in failed');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Sign in failed');
     } finally {
       setLoading(false);
     }
