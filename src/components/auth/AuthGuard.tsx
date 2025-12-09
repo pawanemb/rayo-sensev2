@@ -1,40 +1,34 @@
-"use client";
+'use client';
+
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuthStore } from '@/store/authStore';
 
 type AuthGuardProps = {
   children: React.ReactNode;
 }
 
 export default function AuthGuard({ children }: AuthGuardProps) {
-  const { isAuthenticated, user, loading } = useAuth();
+  const { user, isAdmin, initialized } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
-    // Wait for auth check to complete
-    if (!loading) {
-      // If not authenticated, redirect to signin
-      if (!isAuthenticated || !user) {
-        router.push('/signin');
-        return;
-      }
+    if (!initialized) return;
 
-      // Check for admin role
-      const userRole = (user.role || '').toLowerCase();
-      if (userRole !== 'admin' && userRole !== 'administrator') {
-        router.push('/signin?error=admin_required');
-      }
+    // If not authenticated, redirect to signin
+    if (!user) {
+      router.push('/signin');
+      return;
     }
-  }, [isAuthenticated, user, loading, router]);
+
+    // Check for admin role
+    if (!isAdmin) {
+      router.push('/signin?error=admin_required');
+    }
+  }, [user, isAdmin, initialized, router]);
 
   // Don't render anything while loading or if not authenticated
-  if (loading || !isAuthenticated || !user) {
-    return null;
-  }
-
-  const userRole = (user.role || '').toLowerCase();
-  if (userRole !== 'admin' && userRole !== 'administrator') {
+  if (!initialized || !user || !isAdmin) {
     return null;
   }
 

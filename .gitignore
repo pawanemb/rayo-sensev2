@@ -7,7 +7,8 @@
 /.pnp
 .pnp.js
 .yarn/install-state.gz
-
+rayo-app
+rayo-sense
 # testing
 /coverage
 

@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { handleApiError, requireAdmin } from "@/lib/auth/requireAdmin";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
     const resolvedParams = await params;
     const { searchParams } = new URL(request.url);
     

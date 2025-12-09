@@ -43,6 +43,7 @@
     "@types/js-cookie": "^3.0.6",
     "apexcharts": "^4.3.0",
     "autoprefixer": "^10.4.20",
+    "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "flatpickr": "^4.6.13",
@@ -52,6 +53,7 @@
     "next": "15.2.6",
     "react": "^19.0.0",
     "react-apexcharts": "^1.7.0",
+    "react-auth-kit": "^4.0.2-alpha.11",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^19.0.0",
@@ -60,7 +62,8 @@
     "reactjs-tiptap-editor": "^1.0.1",
     "swiper": "^11.2.0",
     "tailwind-merge": "^2.6.0",
-    "yet-another-react-lightbox": "^3.26.0"
+    "yet-another-react-lightbox": "^3.26.0",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

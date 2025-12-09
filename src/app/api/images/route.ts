@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { handleApiError, requireAdmin } from "@/lib/auth/requireAdmin";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 const DEFAULT_PER_PAGE = 12; // Good for image galleries (3x4 grid)
@@ -7,7 +6,6 @@ const MAX_PER_PAGE = 50;
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, Number(searchParams.get("page")) || 1);

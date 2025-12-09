@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { handleApiError, requireAdmin } from "@/lib/auth/requireAdmin";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function PATCH(
@@ -7,7 +6,6 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
     
     const resolvedParams = await params;
     const { id } = resolvedParams;

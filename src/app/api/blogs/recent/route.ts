@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
-import { requireAdmin, handleApiError } from '@/lib/auth/requireAdmin';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export async function GET() {
   try {
     // Verify admin authentication
-    await requireAdmin();
 
     console.log('📊 Fetching recent blogs...');
 

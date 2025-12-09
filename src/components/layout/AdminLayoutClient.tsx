@@ -1,7 +1,7 @@
 "use client";
 
 import { useSidebar } from "@/context/SidebarContext";
-import { useAuth } from "@/context/AuthContext";
+import { useAuthStore } from "@/store/authStore";
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
@@ -14,26 +14,25 @@ export default function AdminLayoutClient({
   children: React.ReactNode;
 }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
-  const { isAuthenticated, user, loading } = useAuth();
+  const { user, isAdmin, initialized } = useAuthStore();
   const router = useRouter();
 
   // Check authentication and redirect if needed
   useEffect(() => {
     // Wait for auth to finish loading before making redirect decisions
-    if (!loading) {
+    if (initialized) {
       // Only redirect if we've completed the initial auth check and user is not authenticated
-      if (!isAuthenticated || !user) {
+      if (!user) {
         router.push('/signin');
         return;
       }
 
       // Check for admin role
-      const userRole = (user.role || '').toLowerCase();
-      if (userRole !== 'admin' && userRole !== 'administrator') {
+      if (!isAdmin) {
         router.push('/signin?error=admin_required');
       }
     }
-  }, [isAuthenticated, user, loading, router]);
+  }, [user, isAdmin, initialized, router]);
 
   // Dynamic class for main content margin based on sidebar state
   const mainContentMargin = isMobileOpen

@@ -1,13 +1,17 @@
 "use client";
 import Image from "next/image";
 import React, { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuthStore } from "@/store/authStore";
+import { useRouter } from "next/navigation";
+import { broadcastLogout } from "@/lib/auth/useAuthSyncTabs";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const router = useRouter();
 
   function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     e.stopPropagation();
@@ -21,6 +25,8 @@ export default function UserDropdown() {
   async function handleSignOut() {
     closeDropdown();
     await logout();
+    broadcastLogout();
+    router.push('/signin');
   }
   return (
     <div className="relative">
@@ -34,12 +40,12 @@ export default function UserDropdown() {
               width={44}
               height={44}
               src={user.avatar}
-              alt={user.name || 'User'}
+              alt={user.full_name || 'User'}
               className="w-full h-full object-cover"
             />
           ) : (
             <span className="text-white font-medium text-lg">
-              {(user?.name || user?.email || 'A')
+              {(user?.full_name || user?.email || 'A')
                 .charAt(0)
                 .toUpperCase()}
             </span>
@@ -47,7 +53,7 @@ export default function UserDropdown() {
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">
-          {user?.name || 'Admin'}
+          {user?.full_name || user?.email?.split('@')[0] || 'Admin'}
         </span>
 
         <svg
@@ -77,7 +83,7 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {user?.name || 'Administrator'}
+            {user?.full_name || 'Administrator'}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
             {user?.email || 'admin@company.com'}

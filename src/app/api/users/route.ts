@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { handleApiError, requireAdmin } from "@/lib/auth/requireAdmin";
 import { normalizeUser } from "@/lib/users/transform";
 
 const DEFAULT_PER_PAGE = 10;
@@ -58,7 +57,6 @@ async function getTotalUserCount(): Promise<number> {
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
     const perPage = Math.min(MAX_PER_PAGE, Number(searchParams.get("perPage")) || DEFAULT_PER_PAGE);
@@ -170,7 +168,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
     const body = await request.json();
     const { email, password, metadata = {}, appMetadata = {} } = body;
 

@@ -6,8 +6,9 @@ import Button from "@/components/ui/button/Button";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
+import { broadcastLogin } from "@/lib/auth/useAuthSyncTabs";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -15,20 +16,25 @@ export default function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { login, loading } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const login = useAuthStore((state) => state.login);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    const result = await login(email, password);
-
-    if (result.success) {
-      // Success - redirect to admin dashboard using Next.js router
+    try {
+      await login(email, password);
+      // Broadcast login to other tabs
+      broadcastLogin();
+      // Success - redirect to admin dashboard
       router.push('/');
-    } else {
-      setError(result.message || 'Sign in failed');
+    } catch (err: any) {
+      setError(err.message || 'Sign in failed');
+    } finally {
+      setLoading(false);
     }
   };
 

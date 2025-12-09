@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { handleApiError, requireAdmin } from "@/lib/auth/requireAdmin";
 import clientPromise from "@/lib/mongodb";
 import { normalizeUser } from "@/lib/users/transform";
 
@@ -15,7 +14,6 @@ export async function GET(
     console.log(`[PROJECT/${projectId}] API request received`);
 
     // Require admin authentication
-    const auth = await requireAdmin();
     console.log(`[PROJECT/${projectId}] Auth passed for user: ${auth?.id}`);
 
     // Step 1: Fetch project details from Supabase

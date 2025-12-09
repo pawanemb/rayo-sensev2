@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { handleApiError, requireAdmin } from "@/lib/auth/requireAdmin";
 import { normalizeUser } from "@/lib/users/transform";
 
 export async function GET(
@@ -8,7 +7,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
     const resolvedParams = await params;
     
     // Get user from auth
@@ -93,7 +91,6 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
     const body = await request.json();
     const { email, password, metadata, appMetadata } = body;
 
@@ -121,7 +118,6 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
     const resolvedParams = await params;
     const { error } = await supabaseAdmin.auth.admin.deleteUser(resolvedParams.id);
     if (error) throw error;
