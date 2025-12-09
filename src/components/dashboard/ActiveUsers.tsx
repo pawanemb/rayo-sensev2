@@ -140,7 +140,7 @@ export default function ActiveUsers() {
         </div>
 
         <div className="space-y-3">
-          {[1, 2, 3, 4, 5].map((index) => (
+          {[1, 2, 3, 4].map((index) => (
             <div
               key={index}
               className="flex items-start gap-4 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30"
@@ -264,8 +264,8 @@ export default function ActiveUsers() {
           );
         })}
 
-        {/* Render empty placeholder cards to make minimum 5 cards */}
-        {Array.from({ length: Math.max(0, 5 - (activeUsersData?.active_users.length || 0)) }).map((_, index) => (
+        {/* Render empty placeholder cards to make minimum 4 cards */}
+        {Array.from({ length: Math.max(0, 4 - (activeUsersData?.active_users.length || 0)) }).map((_, index) => (
           <div
             key={`empty-${index}`}
             className="flex items-start gap-4 p-3.5 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-800/10"
