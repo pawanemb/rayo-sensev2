@@ -9,6 +9,7 @@ import { FcGoogle } from "react-icons/fc";
 import { MdDelete } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
 import { SiShopify } from "react-icons/si";
+import { generateAvatar } from "@/utils/avatar";
 import {
   Table,
   TableBody,
@@ -372,7 +373,13 @@ export default function ProjectsPage() {
                           {project.user ? (
                             <div className="flex items-center gap-3">
                               <div className="relative h-8 w-8 overflow-hidden rounded-full border border-gray-100 dark:border-gray-700">
-                                <Image src={project.user.avatar} alt={project.user.name} fill sizes="32px" className="object-cover" />
+                                <Image
+                                  src={project.user.avatar || generateAvatar(project.user.name)}
+                                  alt={project.user.name}
+                                  fill
+                                  sizes="32px"
+                                  className="object-cover"
+                                />
                               </div>
                               <div className="space-y-0.5">
                                 <p className="text-sm font-medium text-gray-900 dark:text-white">{project.user.name}</p>

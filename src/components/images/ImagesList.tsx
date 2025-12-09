@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { FaSearch, FaTimes, FaList, FaTh } from "react-icons/fa";
+import { generateAvatar } from "@/utils/avatar";
 import {
   getProjectImages,
   type ProjectImage,
@@ -31,7 +32,7 @@ export default function ImagesList() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [hoveredImage, setHoveredImage] = useState<{ filename: string; description: string | null; x: number; y: number } | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
 
   // Filters
   const [userFilter, setUserFilter] = useState("");
@@ -308,17 +309,15 @@ export default function ImagesList() {
                         <TableCell className="px-5 py-4">
                           {image.user ? (
                             <div className="flex items-center gap-3">
-                              {image.user.avatar && (
-                                <div className="relative h-8 w-8 overflow-hidden rounded-full">
-                                  <Image
-                                    src={image.user.avatar}
-                                    alt={image.user.name || image.user.email}
-                                    fill
-                                    className="object-cover"
-                                    sizes="32px"
-                                  />
-                                </div>
-                              )}
+                              <div className="relative h-8 w-8 overflow-hidden rounded-full border border-gray-100 dark:border-gray-700">
+                                <Image
+                                  src={image.user.avatar || generateAvatar(image.user.name || image.user.email)}
+                                  alt={image.user.name || image.user.email}
+                                  fill
+                                  className="object-cover"
+                                  sizes="32px"
+                                />
+                              </div>
                               <div className="min-w-0 flex-1">
                                 {image.user.name && (
                                   <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
@@ -379,13 +378,17 @@ export default function ImagesList() {
         /* Grid View */
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           {isLoading ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 12 }).map((_, index) => (
                 <div key={index} className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-                  <div className="aspect-square w-full bg-gray-100 dark:bg-gray-700 animate-pulse" />
+                  <div className="aspect-video w-full bg-gray-100 dark:bg-gray-700 animate-pulse" />
                   <div className="p-4 space-y-3">
                     <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
                     <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3 animate-pulse" />
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse" />
+                    </div>
                   </div>
                 </div>
               ))}
@@ -399,7 +402,7 @@ export default function ImagesList() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {images.map((image, index) => (
                 <div
                   key={image.id}
@@ -427,15 +430,24 @@ export default function ImagesList() {
                   }}
                   onMouseLeave={() => setHoveredImage(null)}
                 >
-                  {/* Image Preview */}
-                  <div className="relative aspect-square w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
+                  {/* Image Preview with Category Overlay */}
+                  <div className="relative aspect-video w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
                     <Image
                       src={image.public_url}
                       alt={image.original_filename}
                       fill
                       className="object-cover transition-transform group-hover:scale-105"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
+
+                    {/* Category Badge Overlay */}
+                    {image.category && (
+                      <div className="absolute top-3 right-3">
+                        <span className="inline-flex rounded-full bg-brand-500/90 backdrop-blur-sm px-2.5 py-1 text-xs font-medium text-white shadow-lg">
+                          {image.category}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Card Content */}
@@ -445,32 +457,60 @@ export default function ImagesList() {
                       {image.original_filename}
                     </h3>
 
-                    {/* Project */}
-                    {image.project && (
-                      <div className="flex items-center gap-2">
-                        <div className="relative h-6 w-6 flex-shrink-0 overflow-hidden rounded border border-gray-100 dark:border-gray-700">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={`https://www.google.com/s2/favicons?domain=${new URL(image.project.url).hostname}&sz=64`}
-                            alt={image.project.name}
-                            className="h-full w-full object-contain"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
+                    {/* Project and User Info Side by Side */}
+                    <div className="flex items-center justify-between gap-3 text-xs">
+                      {/* Project */}
+                      {image.project ? (
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          <div className="relative h-5 w-5 flex-shrink-0 overflow-hidden rounded border border-gray-100 dark:border-gray-700">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={`https://www.google.com/s2/favicons?domain=${new URL(image.project.url).hostname}&sz=64`}
+                              alt={image.project.name}
+                              className="h-full w-full object-contain"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-gray-900 dark:text-white font-medium">
+                              {image.project.name}
+                            </p>
+                            <p className="truncate text-gray-500 dark:text-gray-400">
+                              {new URL(image.project.url).hostname}
+                            </p>
+                          </div>
                         </div>
-                        <p className="truncate text-xs text-gray-600 dark:text-gray-400">
-                          {image.project.name}
-                        </p>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="flex-1" />
+                      )}
 
-                    {/* Category */}
-                    {image.category && (
-                      <span className="inline-flex rounded-full bg-brand-500/10 px-2 py-0.5 text-xs font-medium text-brand-600 dark:text-brand-300">
-                        {image.category}
-                      </span>
-                    )}
+                      {/* User */}
+                      {image.user && (
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          <div className="relative h-5 w-5 flex-shrink-0 overflow-hidden rounded-full border border-gray-100 dark:border-gray-700">
+                            <Image
+                              src={image.user.avatar || generateAvatar(image.user.name || image.user.email)}
+                              alt={image.user.name || image.user.email}
+                              fill
+                              className="object-cover"
+                              sizes="20px"
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            {image.user.name && (
+                              <p className="truncate text-gray-900 dark:text-white font-medium">
+                                {image.user.name}
+                              </p>
+                            )}
+                            <p className="truncate text-gray-500 dark:text-gray-400">
+                              {image.user.email}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
                     {/* Meta Info */}
                     <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
