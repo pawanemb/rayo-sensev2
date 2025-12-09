@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { FaFileAlt, FaArrowRight } from "react-icons/fa";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface BlogRecord {
   _id: string;
@@ -79,7 +80,20 @@ export default function ProjectBlogs({ projectId, blogsCount = 0, recentBlogs = 
         </div>
       </div>
 
-      {blogs.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-700">
+              <Skeleton className="h-4 w-3/4 mb-3" />
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-5 w-20 rounded-full" />
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : blogs.length === 0 ? (
         <div className="py-12 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
             <FaFileAlt className="h-6 w-6 text-gray-400" />
