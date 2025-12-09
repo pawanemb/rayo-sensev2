@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import { BsFillGrid3X3GapFill } from "react-icons/bs";
-import { IoDocumentTextOutline } from "react-icons/io5";
+import { IoDocumentTextOutline, IoImagesOutline } from "react-icons/io5";
 import { FaChevronDown, FaCube, FaRegUserCircle, FaWpforms } from "react-icons/fa";
 import SidebarWidget from "./SidebarWidget";
 
@@ -36,6 +36,11 @@ const navItems: NavItem[] = [
     icon: <IoDocumentTextOutline />,
     name: "Blogs",
     path: "/blogs",
+  },
+  {
+    icon: <IoImagesOutline />,
+    name: "Images",
+    path: "/images",
   },
   {
     icon: <FaWpforms />,
