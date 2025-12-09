@@ -103,14 +103,16 @@ const enrichLogsWithDetails = async (logs: unknown[]) => {
       const { ObjectId } = await import('mongodb');
 
       // Convert string IDs to ObjectId for MongoDB query
-      const objectIds = blogIds.map((id) => {
-        try {
-          return new ObjectId(id);
-        } catch (error) {
-          console.error(`[LOGS] Invalid blog ID format: ${id}`, error);
-          return null;
-        }
-      }).filter(Boolean);
+      const objectIds = blogIds
+        .map((id) => {
+          try {
+            return new ObjectId(id);
+          } catch (error) {
+            console.error(`[LOGS] Invalid blog ID format: ${id}`, error);
+            return null;
+          }
+        })
+        .filter((id): id is import('mongodb').ObjectId => id !== null);
 
       console.log(`[LOGS] Fetching ${objectIds.length} blogs from MongoDB`);
 
@@ -142,9 +144,9 @@ const enrichLogsWithDetails = async (logs: unknown[]) => {
 
   // Enrich logs with fetched details
   return logs.map((log: unknown) => {
-    const typedLog = log as { user_id?: string; project_id?: string; blog_id?: string };
+    const typedLog = log as Record<string, unknown> & { user_id?: string; project_id?: string; blog_id?: string };
     return {
-      ...log,
+      ...typedLog,
       user_details: typedLog.user_id ? (userDetails[typedLog.user_id] || null) : null,
       project_details: typedLog.project_id ? (projectDetails[typedLog.project_id] || null) : null,
       blog_details: typedLog.blog_id ? (blogDetails[typedLog.blog_id] || null) : null,

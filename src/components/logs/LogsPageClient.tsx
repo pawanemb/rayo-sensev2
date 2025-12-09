@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
-import { FaSync, FaFileExport, FaCheckCircle, FaTimesCircle, FaGlobe, FaClock, FaDatabase } from "react-icons/fa";
+import { FaSync, FaFileExport, FaCheckCircle, FaTimesCircle, FaGlobe, FaClock, FaDatabase, FaPlus } from "react-icons/fa";
 import { generateAvatar } from "@/utils/avatar";
 import {
   Table,
@@ -20,6 +20,7 @@ import {
   ScrapeRequest,
   ErrorLog,
 } from "@/lib/logs/logsService";
+import WebScraper from "@/components/developer/WebScraper";
 
 type TabType = "scrape_requests" | "error_logs";
 
@@ -41,7 +42,7 @@ export default function LogsPageClient() {
   const [errorLogsPage, setErrorLogsPage] = useState(1);
   const [errorLogsTotal, setErrorLogsTotal] = useState(0);
   const [errorLogsTotalPages, setErrorLogsTotalPages] = useState(0);
-
+  const [showScrapeModal, setShowScrapeModal] = useState(false);
 
   const limit = 10;
 
@@ -273,6 +274,14 @@ export default function LogsPageClient() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setShowScrapeModal(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-brand-700"
+          >
+            <FaPlus size={12} />
+            Manual Scrape
+          </button>
+
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
@@ -866,6 +875,41 @@ export default function LogsPageClient() {
           </div>
         </div>
       </div>
+
+      {/* Manual Scrape Modal */}
+      {showScrapeModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 rounded-xl shadow-2xl">
+            {/* Modal Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900 backdrop-blur-md">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 shadow-md">
+                  <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Manual Web Scraper</h2>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">Extract content from websites and PDF files</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowScrapeModal(false)}
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              <WebScraper />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
