@@ -8,6 +8,7 @@ export interface IPDetails {
   region: string;
   city: string;
   timezone: string;
+  flag: string;
   isLocal: boolean;
   coordinates?: {
     lat: number;
@@ -97,7 +98,7 @@ export const getFormSubmissions = async (params: GetFormSubmissionsParams = {}):
           status: 'email sent',
           created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
           updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          notes: null
+          notes: undefined
         },
         {
           id: '2',

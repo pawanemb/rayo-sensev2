@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import {
   getFormSubmissions,
-  updateFormSubmission,
   FormSubmission,
   PaginationInfo
 } from '@/services/formSubmissionService';
@@ -16,7 +15,6 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
-import FormSubmissionModal from './FormSubmissionModal';
 
 
 // Fallback data in case API fails
@@ -30,7 +28,7 @@ const fallbackSubmissions: FormSubmission[] = [
     status: 'email sent',
     created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    notes: null
+    notes: undefined
   },
   {
     id: '2',
@@ -60,12 +58,7 @@ const FormsTable = () => {
     hasNextPage: false,
     hasPrevPage: false
   });
-  
-  // Modal state
-  const [selectedSubmission, setSelectedSubmission] = useState<FormSubmission | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
-  
+
   const fetchSubmissions = useCallback(async (page: number, search: string, limit: number = 10) => {
     setLoading(true);
     setError(null);
@@ -116,28 +109,6 @@ const FormsTable = () => {
   // Pagination handler
   const handlePageChange = (pageNumber: number) => {
     fetchSubmissions(pageNumber, searchTerm, 10);
-  };
-
-  // Handle submission update
-  const handleSubmissionUpdate = async (id: string, updates: Partial<FormSubmission>) => {
-    try {
-      setActionLoading(true);
-      await updateFormSubmission(id, updates);
-      setShowModal(false);
-      setSelectedSubmission(null);
-      await fetchSubmissions(pagination.currentPage, searchTerm, 10);
-    } catch (error) {
-      console.error('Error updating form submission:', error);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-
-  // Open submission modal
-  const openSubmissionModal = (submission: FormSubmission) => {
-    setSelectedSubmission(submission);
-    setShowModal(true);
   };
 
   const formatUrl = (url: string) => {
@@ -279,8 +250,7 @@ const FormsTable = () => {
                     submissions.map((submission) => (
                       <TableRow
                         key={submission.id}
-                        onClick={() => openSubmissionModal(submission)}
-                        className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                       >
                         <TableCell className="px-5 py-4">
                           <div className="flex items-center gap-3">
@@ -387,21 +357,6 @@ const FormsTable = () => {
           </div>
         </div>
       </div>
-
-
-      {/* Form Submission Modal */}
-      {showModal && selectedSubmission && (
-        <FormSubmissionModal
-          submission={selectedSubmission}
-          isOpen={showModal}
-          onClose={() => {
-            setShowModal(false);
-            setSelectedSubmission(null);
-          }}
-          onUpdate={handleSubmissionUpdate}
-          isLoading={actionLoading}
-        />
-      )}
     </div>
   );
 };

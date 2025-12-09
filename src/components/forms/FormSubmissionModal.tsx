@@ -233,7 +233,7 @@ const FormSubmissionModal: React.FC<FormSubmissionModalProps> = ({
                     </label>
                     <select
                       value={status}
-                      onChange={(e) => setStatus(e.target.value)}
+                      onChange={(e) => setStatus(e.target.value as 'email sent' | 'error' | 'processing' | 'done')}
                       disabled={isLoading}
                       className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-200 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                     >
