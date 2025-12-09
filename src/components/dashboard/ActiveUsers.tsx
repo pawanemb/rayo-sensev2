@@ -140,7 +140,7 @@ export default function ActiveUsers() {
         </div>
 
         <div className="space-y-3">
-          {[1, 2, 3, 4].map((index) => (
+          {[1, 2, 3, 4, 5].map((index) => (
             <div
               key={index}
               className="flex items-start gap-4 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30"
@@ -211,80 +211,88 @@ export default function ActiveUsers() {
         </span>
       </div>
 
-      {!activeUsersData || activeUsersData.active_users.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12">
-          <svg
-            className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-            />
-          </svg>
-          <p className="text-gray-600 dark:text-gray-300 font-medium">No Active Users</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            No users are currently active
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar">
-          {activeUsersData.active_users.map((user) => {
-            const isNewUser = newUserIds.has(user.user_id);
-            return (
-              <div
-                key={user.user_id}
-                className={`flex items-start gap-4 p-3.5 rounded-xl border transition-all ${
-                  isNewUser
-                    ? 'animate-slideIn bg-brand-50/50 dark:bg-brand-900/20 border-brand-200 dark:border-brand-700'
-                    : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 hover:border-brand-200 dark:hover:border-brand-700'
-                }`}
-              >
-              {/* User Avatar with Active Indicator */}
-              <div className="flex-shrink-0 relative">
-                <div className="relative w-10 h-10 overflow-hidden rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700">
-                  <Image
-                    src={user.avatar}
-                    alt={user.name}
-                    fill
-                    sizes="40px"
-                    className="object-cover"
-                  />
-                </div>
-                {/* Active indicator - green dot if active in last 5 min */}
-                {user.is_active && (
-                  <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white dark:ring-gray-900 animate-pulse"></span>
-                )}
+      <div className="space-y-3">
+        {/* Render actual active users */}
+        {activeUsersData && activeUsersData.active_users.map((user) => {
+          const isNewUser = newUserIds.has(user.user_id);
+          return (
+            <div
+              key={user.user_id}
+              className={`flex items-start gap-4 p-3.5 rounded-xl border transition-all ${
+                isNewUser
+                  ? 'animate-slideIn bg-brand-50/50 dark:bg-brand-900/20 border-brand-200 dark:border-brand-700'
+                  : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 hover:border-brand-200 dark:hover:border-brand-700'
+              }`}
+            >
+            {/* User Avatar with Active Indicator */}
+            <div className="flex-shrink-0 relative">
+              <div className="relative w-10 h-10 overflow-hidden rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700">
+                <Image
+                  src={user.avatar}
+                  alt={user.name}
+                  fill
+                  sizes="40px"
+                  className="object-cover"
+                />
               </div>
+              {/* Active indicator - green dot if active in last 5 min */}
+              {user.is_active && (
+                <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white dark:ring-gray-900 animate-pulse"></span>
+              )}
+            </div>
 
-              {/* User Info */}
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate mb-1">
-                  {user.name}
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {user.user_email}
-                </p>
+            {/* User Info */}
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate mb-1">
+                {user.name}
+              </h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                {user.user_email}
+              </p>
+            </div>
+
+            {/* Last Activity Time */}
+            <div className="flex-shrink-0 text-right">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                Last seen
               </div>
-
-              {/* Last Activity Time */}
-              <div className="flex-shrink-0 text-right">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  Last seen
-                </div>
-                <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  {getTimeAgo(user.last_activity)}
-                </div>
+              <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                {getTimeAgo(user.last_activity)}
               </div>
             </div>
-            );
-          })}
-        </div>
-      )}
+          </div>
+          );
+        })}
+
+        {/* Render empty placeholder cards to make minimum 5 cards */}
+        {Array.from({ length: Math.max(0, 5 - (activeUsersData?.active_users.length || 0)) }).map((_, index) => (
+          <div
+            key={`empty-${index}`}
+            className="flex items-start gap-4 p-3.5 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-800/10"
+          >
+            {/* Empty Avatar */}
+            <div className="flex-shrink-0 relative">
+              <div className="relative w-10 h-10 overflow-hidden rounded-full border border-dashed border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <svg className="w-5 h-5 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Empty User Info */}
+            <div className="flex-1 min-w-0">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2"></div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+            </div>
+
+            {/* Empty Last Activity */}
+            <div className="flex-shrink-0 text-right">
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
