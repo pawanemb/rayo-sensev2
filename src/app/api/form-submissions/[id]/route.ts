@@ -38,10 +38,10 @@ async function getIPLocation(ip: string) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const { data: submission, error } = await supabaseAdmin
       .from('free_analysis_submissions')
@@ -78,15 +78,15 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const updates = await request.json();
 
     // Only allow updating specific fields
     const allowedFields = ['status', 'notes', 'processed_at'];
-    const filteredUpdates: Record<string, any> = {};
+    const filteredUpdates: Record<string, unknown> = {};
 
     for (const field of allowedFields) {
       if (field in updates) {
