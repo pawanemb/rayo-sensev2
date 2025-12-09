@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import type { User } from '@supabase/supabase-js';
 
 interface ActiveUser {
@@ -216,9 +217,10 @@ export default function ActiveUsers() {
         {activeUsersData && activeUsersData.active_users.map((user) => {
           const isNewUser = newUserIds.has(user.user_id);
           return (
-            <div
+            <Link
               key={user.user_id}
-              className={`flex items-start gap-4 p-3.5 rounded-xl border transition-all ${
+              href={`/user/${user.user_id}`}
+              className={`flex items-start gap-4 p-3.5 rounded-xl border transition-all cursor-pointer ${
                 isNewUser
                   ? 'animate-slideIn bg-brand-50/50 dark:bg-brand-900/20 border-brand-200 dark:border-brand-700'
                   : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 hover:border-brand-200 dark:hover:border-brand-700'
@@ -260,7 +262,7 @@ export default function ActiveUsers() {
                 {getTimeAgo(user.last_activity)}
               </div>
             </div>
-          </div>
+          </Link>
           );
         })}
       </div>

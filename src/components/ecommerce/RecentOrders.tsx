@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -261,7 +262,7 @@ export default function RecentOrders() {
                 return (
                   <TableRow key={payment.id}>
                     <TableCell className="py-3 pr-8">
-                      <div className="flex items-center gap-3">
+                      <Link href={`/user/${payment.user_id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                         <div className="relative h-10 w-10 overflow-hidden rounded-full border border-gray-100 dark:border-gray-700">
                           <Image
                             src={getUserAvatar(payment.user_id, payment.user_avatar)}
@@ -279,7 +280,7 @@ export default function RecentOrders() {
                             {payment.user_email}
                           </span>
                         </div>
-                      </div>
+                      </Link>
                     </TableCell>
                     <TableCell className="py-3 text-gray-600 text-theme-sm dark:text-gray-300">
                       {payment.description || '-'}
