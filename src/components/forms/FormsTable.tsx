@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import {
   getFormSubmissions,
   updateFormSubmission,
@@ -65,9 +66,6 @@ const FormsTable = () => {
   const [showModal, setShowModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   
-  // Debounced search
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
-
   const fetchSubmissions = useCallback(async (page: number, search: string, limit: number = 10) => {
     setLoading(true);
     setError(null);
@@ -98,28 +96,20 @@ const FormsTable = () => {
   }, []);
 
   useEffect(() => {
-    fetchSubmissions(1, '', '', 10);
+    fetchSubmissions(1, '', 10);
   }, [fetchSubmissions]);
 
   // Handle search with debouncing
   useEffect(() => {
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
-    
     const timeout = setTimeout(() => {
       if (searchInput !== searchTerm) {
         setSearchTerm(searchInput);
         fetchSubmissions(1, searchInput, 10);
       }
     }, 500);
-    
-    setSearchTimeout(timeout);
-    
+
     return () => {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
+      clearTimeout(timeout);
     };
   }, [searchInput, fetchSubmissions, searchTerm]);
 
@@ -294,13 +284,13 @@ const FormsTable = () => {
                       >
                         <TableCell className="px-5 py-4">
                           <div className="flex items-center gap-3">
-                            <img
+                            <Image
                               src={`https://www.google.com/s2/favicons?sz=32&domain=${submission.website}`}
                               alt="Favicon"
+                              width={32}
+                              height={32}
                               className="h-8 w-8 flex-shrink-0"
-                              onError={(e) => {
-                                e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="%236b7280"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"/></svg>';
-                              }}
+                              unoptimized
                             />
                             <div className="space-y-1">
                               <p className="text-sm font-semibold text-gray-900 dark:text-white">{submission.email}</p>
