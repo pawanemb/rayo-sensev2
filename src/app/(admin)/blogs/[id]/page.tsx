@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
 // Dynamically import Editor with no SSR
@@ -58,6 +58,25 @@ interface SecondaryKeywords {
   country?: string;
 }
 
+interface StepEntry {
+  step: string;
+  status: string;
+  completed_at: { $date: string } | string;
+}
+
+interface StepTracking {
+  current_step?: string;
+  primary_keyword?: StepEntry[];
+  secondary_keywords?: StepEntry[];
+  category?: StepEntry[];
+  title?: StepEntry[];
+  outline?: StepEntry[];
+  sources?: StepEntry[];
+  content?: StepEntry[];
+  rayo_featured_image?: StepEntry[];
+  [key: string]: StepEntry[] | string | undefined;
+}
+
 interface BlogData {
   _id: string;
   title: string | string[];
@@ -74,10 +93,12 @@ interface BlogData {
   secondary_keywords?: SecondaryKeywords[];
   category?: string;
   subcategory?: string;
+  step_tracking?: StepTracking;
 }
 
 export default function BlogDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const [blog, setBlog] = useState<BlogData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,6 +109,13 @@ export default function BlogDetailPage() {
       fetchBlogData(params.id as string);
     }
   }, [params?.id]);
+
+  // Redirect to journey page if blog status is incomplete (only once)
+  useEffect(() => {
+    if (blog && blog.status === 'incomplete' && !window.location.pathname.includes('/journey')) {
+      router.push(`/blogs/${params.id}/journey`);
+    }
+  }, [blog, params.id, router]);
 
   // Close image preview on ESC key and lock body scroll
   useEffect(() => {
@@ -142,9 +170,11 @@ export default function BlogDetailPage() {
   const getTitle = () => {
     if (!blog?.title) return 'Untitled';
     if (Array.isArray(blog.title)) {
-      return blog.title[blog.title.length - 1] || 'Untitled';
+      if (blog.title.length === 0) return 'Untitled';
+      const lastTitle = blog.title[blog.title.length - 1];
+      return lastTitle && lastTitle.trim() !== '' ? lastTitle : 'Untitled';
     }
-    return blog.title;
+    return blog.title && blog.title.trim() !== '' ? blog.title : 'Untitled';
   };
 
   // Helper to get word count
@@ -295,6 +325,18 @@ export default function BlogDetailPage() {
                 <span>Created: {new Date(blog.created_at).toLocaleString()}</span>
                 <span>Updated: {new Date(blog.updated_at).toLocaleString()}</span>
               </div>
+              {/* View Journey Button */}
+              {blog.step_tracking && (
+                <button
+                  onClick={() => router.push(`/blogs/${params.id}/journey`)}
+                  className="flex items-center gap-2 px-3 py-1.5 mt-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-xs font-medium"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                  View Journey
+                </button>
+              )}
             </div>
           </div>
 

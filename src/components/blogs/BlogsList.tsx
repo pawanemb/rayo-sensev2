@@ -336,7 +336,9 @@ export default function BlogsList() {
                         <TableCell className="px-5 py-4">
                           <div className="space-y-1">
                             <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
-                              {blog.title}
+                              {Array.isArray(blog.title)
+                                ? (blog.title[blog.title.length - 1] || 'Untitled')
+                                : (blog.title || 'Untitled')}
                             </p>
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">

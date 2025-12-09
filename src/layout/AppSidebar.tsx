@@ -8,7 +8,6 @@ import { BsFillGrid3X3GapFill } from "react-icons/bs";
 import { BiDotsHorizontal } from "react-icons/bi";
 import { IoDocumentTextOutline } from "react-icons/io5";
 import { FaChevronDown, FaCube, FaRegUserCircle } from "react-icons/fa";
-import { FiMessageSquare } from "react-icons/fi";
 import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
@@ -38,11 +37,6 @@ const navItems: NavItem[] = [
     icon: <IoDocumentTextOutline />,
     name: "Blogs",
     path: "/blogs",
-  },
-  {
-    icon: <FiMessageSquare />,
-    name: "AI Console",
-    path: "/console",
   },
 ];
 
