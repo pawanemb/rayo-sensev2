@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import { BsFillGrid3X3GapFill } from "react-icons/bs";
 import { IoDocumentTextOutline, IoImagesOutline } from "react-icons/io5";
-import { FaChevronDown, FaCube, FaRegUserCircle, FaWpforms } from "react-icons/fa";
+import { FaChevronDown, FaCube, FaRegUserCircle, FaWpforms, FaListAlt } from "react-icons/fa";
 import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
@@ -46,6 +46,11 @@ const navItems: NavItem[] = [
     icon: <FaWpforms />,
     name: "Forms",
     path: "/forms",
+  },
+  {
+    icon: <FaListAlt />,
+    name: "Logs",
+    path: "/logs",
   },
 ];
 

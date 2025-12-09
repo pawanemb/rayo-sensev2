@@ -4,7 +4,7 @@ import { TableBody, TableCell, TableRow } from "./table"
 interface TableSkeletonProps {
   rows?: number
   columns?: number
-  variant?: "default" | "images"
+  variant?: "default" | "images" | "logs"
 }
 
 export function TableSkeleton({ rows = 5, columns = 7, variant = "default" }: TableSkeletonProps) {
@@ -62,6 +62,101 @@ export function TableSkeleton({ rows = 5, columns = 7, variant = "default" }: Ta
             {/* Uploaded Column */}
             <TableCell className="px-5 py-4">
               <Skeleton className="h-4 w-28" />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    )
+  }
+
+  // Logs table specific skeleton
+  if (variant === "logs") {
+    return (
+      <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
+        {Array.from({ length: rows }).map((_, rowIndex) => (
+          <TableRow key={rowIndex}>
+            {/* Timestamp */}
+            <TableCell className="px-2 py-1.5">
+              <Skeleton className="h-3 w-20" />
+            </TableCell>
+
+            {/* URL or Error Type */}
+            <TableCell className="px-2 py-1.5">
+              <div className="flex items-center gap-1.5">
+                <Skeleton className="h-3.5 w-3.5 rounded flex-shrink-0" />
+                <Skeleton className="h-3 w-28" />
+              </div>
+            </TableCell>
+
+            {/* Method/Status or Error Message */}
+            <TableCell className="px-2 py-1.5">
+              {columns >= 9 ? (
+                <div className="flex flex-col gap-0.5">
+                  <Skeleton className="h-4 w-12 rounded-full" />
+                  <Skeleton className="h-4 w-14 rounded-full" />
+                </div>
+              ) : (
+                <Skeleton className="h-4 w-14 rounded-full" />
+              )}
+            </TableCell>
+
+            {/* Duration/Cache or URL */}
+            <TableCell className="px-2 py-1.5">
+              {columns >= 9 ? (
+                <div className="flex items-center gap-1.5">
+                  <Skeleton className="h-3 w-10" />
+                  <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <Skeleton className="h-3.5 w-3.5 rounded flex-shrink-0" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+              )}
+            </TableCell>
+
+            {/* Proxy or Method */}
+            <TableCell className="px-2 py-1.5">
+              {columns >= 9 ? (
+                <Skeleton className="h-4 w-4 rounded-full" />
+              ) : (
+                <Skeleton className="h-4 w-14 rounded-full" />
+              )}
+            </TableCell>
+
+            {/* User Details */}
+            <TableCell className="px-2 py-1.5">
+              <div className="flex items-center gap-1.5">
+                <Skeleton className="h-5 w-5 rounded-full flex-shrink-0" />
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-2 w-20" />
+                </div>
+              </div>
+            </TableCell>
+
+            {/* Project Details */}
+            <TableCell className="px-2 py-1.5">
+              <div className="flex items-center gap-1.5">
+                <Skeleton className="h-5 w-5 rounded flex-shrink-0" />
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-2 w-20" />
+                </div>
+              </div>
+            </TableCell>
+
+            {/* Blog Details */}
+            <TableCell className="px-2 py-1.5">
+              <div className="flex flex-col gap-0.5">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-4 w-14 rounded-full" />
+              </div>
+            </TableCell>
+
+            {/* Comment ID */}
+            <TableCell className="px-2 py-1.5">
+              <Skeleton className="h-4 w-10 rounded" />
             </TableCell>
           </TableRow>
         ))}
