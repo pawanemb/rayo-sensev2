@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { RichTextProvider } from 'reactjs-tiptap-editor'
 
@@ -100,14 +100,15 @@ import { EditorContent, useEditor } from '@tiptap/react';
 //   document: ydoc,
 // })
 
-function getRandomColor() {
-  const letters = '0123456789ABCDEF'
-  let color = '#'
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)]
-  }
-  return color
-}
+// Unused function - kept for future collaboration feature
+// function getRandomColor() {
+//   const letters = '0123456789ABCDEF'
+//   let color = '#'
+//   for (let i = 0; i < 6; i++) {
+//     color += letters[Math.floor(Math.random() * 16)]
+//   }
+//   return color
+// }
 
 function convertBase64ToBlob(base64: string) {
   const arr = base64.split(',')
@@ -204,7 +205,7 @@ const extensions = [
   ExportWord,
   TextDirection,
   Attachment.configure({
-    upload: (file: any) => {
+    upload: (file: File) => {
       // fake upload return base 64
       const reader = new FileReader()
       reader.readAsDataURL(file)
@@ -220,7 +221,7 @@ const extensions = [
   Katex,
   Excalidraw,
   Mermaid.configure({
-    upload: (file: any) => {
+    upload: (file: File) => {
       // fake upload return base 64
       const reader = new FileReader()
       reader.readAsDataURL(file)
@@ -234,7 +235,7 @@ const extensions = [
     },
   }),
   Drawer.configure({
-    upload: (file: any) => {
+    upload: (file: File) => {
       // fake upload return base 64
       const reader = new FileReader()
       reader.readAsDataURL(file)
@@ -265,26 +266,28 @@ const extensions = [
 
 const DEFAULT = `<h1 dir="auto" style="text-align: center;">Rich Text Editor</h1><p dir="auto">A modern WYSIWYG rich text editor based on <a target="_blank" rel="noopener noreferrer nofollow" class="link" href="https://github.com/scrumpy/tiptap">tiptap</a> and <a target="_blank" rel="noopener noreferrer nofollow" class="link" href="https://ui.shadcn.com/">shadcn ui</a> for Reactjs</p><p dir="auto"><div class="image" style="text-align: center;"><img src="https://picsum.photos/1920/1080.webp?t=1" width="500" flipx="false" flipy="false" align="center" inline="false" style=""></div></p><p dir="auto"></p><div data-type="horizontalRule"><hr></div><h2 dir="auto">Demo</h2><p dir="auto">👉<a target="_blank" rel="noopener noreferrer nofollow" class="link" href="https://reactjs-tiptap-editor.vercel.app/">Demo</a></p><h2 dir="auto">Features</h2><ul><li><p dir="auto">Use <a target="_blank" rel="noopener noreferrer nofollow" class="link" href="https://ui.shadcn.com/">shadcn ui</a> components</p></li><li><p dir="auto">Markdown support</p></li><li><p dir="auto">TypeScript support</p></li><li><p dir="auto">I18n support (vi, en, zh, pt)</p></li><li><p dir="auto">React support</p></li><li><p dir="auto">Slash Commands</p></li><li><p dir="auto">Multi Column</p></li><li><p dir="auto">TailwindCss</p></li><li><p dir="auto">Support emoji</p></li><li><p dir="auto">Support iframe</p></li><li><p dir="auto">Support mermaid</p></li></ul><h2 dir="auto">Installation</h2><pre code="pnpm install reactjs-tiptap-editor" language="bash" linenumbers="true" wordwrap="false" tabsize="2" shouldfocus="false"><code>pnpm install reactjs-tiptap-editor</code></pre><p dir="auto"></p>`
 
-function debounce(func: any, wait: number) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function debounce<T extends (...args: any[]) => void>(func: T, wait: number) {
   let timeout: NodeJS.Timeout
-  return function (...args: any[]) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return function (this: any, ...args: Parameters<T>) {
     clearTimeout(timeout)
-    // @ts-ignore
     timeout = setTimeout(() => func.apply(this, args), wait)
   }
 }
 
 
-const Header = ({ editor, theme, setTheme }) => {
+// Unused component - kept for future use
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+const Header = ({ editor, theme, setTheme }: { editor: any | null; theme: string; setTheme: (theme: string) => void }) => {
   const [editorEditable, setEditorEditable] = useState(false);
   const [lang, setlang] = useState('vi');
-  const [disable, setDisable] = useState(false)
 
 
 
   useEffect(() => {
     setEditorEditable(editor?.isEditable ?? true);
-  }, []);
+  }, [editor?.isEditable]);
 
   useEffect(() => {
     if (editor) {
@@ -313,7 +316,7 @@ const Header = ({ editor, theme, setTheme }) => {
     >
       <select value={lang} onChange={(e) => {
         setlang(e.target.value);
-        localeActions.setLang(e.target.value)
+        localeActions.setLang(e.target.value as "en" | "vi" | "hu_HU" | "zh_CN" | "pt_BR" | "fi")
       }}>
         <option value="vi">Vietnamese</option>
         <option value="en">English</option>
@@ -430,10 +433,10 @@ function App({ initialContent, readOnly = false }: AppProps) {
   }, [])
 
   const onValueChange = useCallback(
-    debounce((value: any) => {
+    debounce<(value: string) => void>((value: string) => {
       setContent(value)
     }, 300),
-    [],
+    [setContent],
   )
 
   const editor = useEditor({
@@ -456,7 +459,8 @@ function App({ initialContent, readOnly = false }: AppProps) {
   }, [editor, initialContent]);
 
   useEffect(() => {
-    window['editor'] = editor;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any)['editor'] = editor;
   }, [editor]);
 
   return (
@@ -482,7 +486,7 @@ function App({ initialContent, readOnly = false }: AppProps) {
           color: theme === 'dark' ? '#ffffff' : '#000000'
         }}
       >
-      <RichTextProvider editor={editor}
+      <RichTextProvider editor={editor!}
         dark={theme === 'dark'}
       >
         <div className="flex flex-col h-full"

@@ -115,13 +115,13 @@ export default function BlogViewer({ content, title }: BlogViewerProps) {
         </h1>
       )}
 
-      <RichTextProvider editor={editor} dark={false}>
+      {editor && <RichTextProvider editor={editor} dark={false}>
         <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-900 shadow-sm border border-gray-200 dark:border-gray-800">
           <div className="p-6">
             <EditorContent editor={editor} />
           </div>
         </div>
-      </RichTextProvider>
+      </RichTextProvider>}
     </div>
   );
 }
