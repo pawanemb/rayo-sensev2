@@ -18,21 +18,12 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get("userId") || "";
     const category = searchParams.get("category") || "";
 
-    // Calculate pagination
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
-
     // Build query
     let query = supabaseAdmin
       .from('project_images')
       .select('*', { count: 'exact' });
 
-    // Add search filter if provided
-    if (search) {
-      query = query.or(`original_filename.ilike.%${search}%,description.ilike.%${search}%,category.ilike.%${search}%`);
-    }
-
-    // Add filters
+    // Add filters (but NOT search - we'll filter after joining)
     if (projectId) {
       query = query.eq('project_id', projectId);
     }
@@ -48,19 +39,32 @@ export async function GET(request: NextRequest) {
     // Only show active images by default
     query = query.eq('is_active', true);
 
-    // Apply pagination and sorting (newest first)
-    const { data: images, error, count } = await query
-      .order('created_at', { ascending: false })
-      .range(from, to);
+    // Apply sorting (newest first)
+    // When searching, fetch ALL records to filter by joined data (project, user)
+    // Otherwise use pagination at database level
+    query = query.order('created_at', { ascending: false });
+
+    let images, error, count;
+    if (search) {
+      // Fetch all records when searching (we'll filter and paginate in JS)
+      const result = await query.limit(1000);
+      images = result.data;
+      error = result.error;
+      count = result.count;
+    } else {
+      // Use database-level pagination when not searching
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+      const result = await query.range(from, to);
+      images = result.data;
+      error = result.error;
+      count = result.count;
+    }
 
     if (error) {
       console.error('Supabase error:', error);
       throw new Error(`Failed to fetch images: ${error.message}`);
     }
-
-    // Get total count
-    const total = count || 0;
-    const totalPages = Math.max(1, Math.ceil(total / limit));
 
     // Get unique project IDs and user IDs
     const projectIds = [...new Set((images || []).map(img => img.project_id).filter(Boolean))];
@@ -105,11 +109,63 @@ export async function GET(request: NextRequest) {
     }
 
     // Attach project and user data to images
-    const imagesWithDetails = (images || []).map(image => ({
+    let imagesWithDetails = (images || []).map(image => ({
       ...image,
       project: projectsMap.get(image.project_id) || null,
       user: usersMap.get(image.user_id) || null,
     }));
+
+    // If search term exists, filter by ALL fields including joined data
+    if (search) {
+      imagesWithDetails = imagesWithDetails.filter(image => {
+        const searchLower = search.toLowerCase();
+
+        // Check project fields
+        const projectMatch = image.project && (
+          image.project.name.toLowerCase().includes(searchLower) ||
+          image.project.url.toLowerCase().includes(searchLower)
+        );
+
+        // Check user fields
+        const userMatch = image.user && (
+          (image.user.name && image.user.name.toLowerCase().includes(searchLower)) ||
+          image.user.email.toLowerCase().includes(searchLower)
+        );
+
+        // Check image fields
+        const imageMatch =
+          image.original_filename.toLowerCase().includes(searchLower) ||
+          (image.description && image.description.toLowerCase().includes(searchLower)) ||
+          (image.category && image.category.toLowerCase().includes(searchLower));
+
+        return projectMatch || userMatch || imageMatch;
+      });
+
+      // Calculate pagination after filtering
+      const total = imagesWithDetails.length;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      const from = (page - 1) * limit;
+      const to = from + limit;
+
+      // Apply pagination to filtered results
+      const paginatedImages = imagesWithDetails.slice(from, to);
+
+      return NextResponse.json({
+        images: paginatedImages,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          total,
+          limit,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      });
+    }
+
+    // No search - return paginated results from database
+    const total = count || 0;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
 
     return NextResponse.json({
       images: imagesWithDetails,

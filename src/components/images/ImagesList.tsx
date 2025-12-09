@@ -120,9 +120,9 @@ export default function ImagesList() {
 
   return (
     <div className="space-y-6">
-      {/* Header with Search and Filters */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white px-6 py-6 dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* Header with Search */}
+      <div className="rounded-2xl border border-gray-200 bg-white px-6 py-6 dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
               Image Gallery
@@ -135,26 +135,26 @@ export default function ImagesList() {
               Manage and view all project images
             </p>
           </div>
-        </div>
 
-        {/* Search Row */}
-        <div className="relative">
-          <input
-            type="text"
-            className="h-11 w-full rounded-full border border-gray-200 bg-gray-50 pl-11 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
-            placeholder="Search by filename, description, or category..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
-          <FaSearch className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          {searchInput && (
-            <button
-              onClick={handleClearFilters}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-            >
-              <FaTimes className="h-4 w-4" />
-            </button>
-          )}
+          {/* Search Input - Inline */}
+          <div className="relative w-full lg:w-80">
+            <input
+              type="text"
+              className="h-10 w-full rounded-full border border-gray-200 bg-gray-50 pl-10 pr-10 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+              placeholder="Search by project, user, or filename..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+            <FaSearch className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+            {searchInput && (
+              <button
+                onClick={handleClearFilters}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+              >
+                <FaTimes className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
