@@ -317,11 +317,11 @@ export default function UserProjects({ userId, projects, totalProjects = 0 }: Us
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-800">
+            <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-t border-gray-200 pt-4 dark:border-gray-800">
               <div className="text-sm text-gray-500 dark:text-gray-400">
                 Showing {((currentPage - 1) * projectsPerPage) + 1} to {Math.min(currentPage * projectsPerPage, totalProjects)} of {totalProjects} projects
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
@@ -329,20 +329,67 @@ export default function UserProjects({ userId, projects, totalProjects = 0 }: Us
                 >
                   Previous
                 </button>
-                <div className="flex gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                        currentPage === page
-                          ? 'bg-brand-600 text-white'
-                          : 'border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
+                <div className="flex flex-wrap gap-1">
+                  {(() => {
+                    const pages: (number | string)[] = [];
+                    const maxVisible = 5;
+                    
+                    if (totalPages <= maxVisible + 2) {
+                      for (let i = 1; i <= totalPages; i++) {
+                        pages.push(i);
+                      }
+                    } else {
+                      pages.push(1);
+                      
+                      if (currentPage > 3) {
+                        pages.push('...');
+                      }
+                      
+                      const start = Math.max(2, currentPage - 1);
+                      const end = Math.min(totalPages - 1, currentPage + 1);
+                      
+                      for (let i = start; i <= end; i++) {
+                        if (!pages.includes(i)) {
+                          pages.push(i);
+                        }
+                      }
+                      
+                      if (currentPage < totalPages - 2) {
+                        pages.push('...');
+                      }
+                      
+                      if (!pages.includes(totalPages)) {
+                        pages.push(totalPages);
+                      }
+                    }
+                    
+                    return pages.map((page, index) => {
+                      if (page === '...') {
+                        return (
+                          <span
+                            key={`ellipsis-${index}`}
+                            className="flex items-center px-2 text-sm text-gray-500 dark:text-gray-400"
+                          >
+                            ...
+                          </span>
+                        );
+                      }
+                      
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page as number)}
+                          className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+                            currentPage === page
+                              ? 'bg-brand-600 text-white'
+                              : 'border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    });
+                  })()}
                 </div>
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}

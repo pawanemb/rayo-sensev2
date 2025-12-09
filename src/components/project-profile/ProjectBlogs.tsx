@@ -25,15 +25,26 @@ export default function ProjectBlogs({ projectId, blogsCount = 0, recentBlogs = 
   const limit = 5;
   const totalPages = Math.ceil(blogsCount / limit);
 
+  // Update blogs when prop changes
+  React.useEffect(() => {
+    setBlogs(recentBlogs);
+  }, [recentBlogs]);
+
   const fetchBlogs = async (page: number) => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/projects/${projectId}?page=${page}&limit=${limit}`);
       if (response.ok) {
         const data = await response.json();
-        setBlogs(data.recentBlogs);
+        setBlogs(data.recentBlogs || []);
         setCurrentPage(page);
+      } else {
+        console.error('Failed to fetch blogs:', response.status, response.statusText);
+        setBlogs([]);
       }
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+      setBlogs([]);
     } finally {
       setIsLoading(false);
     }

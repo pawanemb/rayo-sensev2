@@ -5,6 +5,7 @@ import ProjectInformation from "@/components/project-profile/ProjectInformation"
 import ProjectConfiguration from "@/components/project-profile/ProjectConfiguration";
 import ProjectSettings from "@/components/project-profile/ProjectSettings";
 import ProjectBlogs from "@/components/project-profile/ProjectBlogs";
+import ProjectImageGallery from "@/components/project-profile/ProjectImageGallery";
 import ScrapedContent from "@/components/project-profile/ScrapedContent";
 
 interface ProjectData {
@@ -107,6 +108,9 @@ export default function ProjectProfile({
           <ScrapedContent scrapedContent={scrapedContent ?? null} />
         </div>
       </div>
+
+      {/* Project Images - Full Width at Bottom */}
+      <ProjectImageGallery projectId={projectId} />
     </div>
   );
 }

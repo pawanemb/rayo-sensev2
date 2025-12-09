@@ -81,36 +81,41 @@ export async function GET(
     try {
       const mongoClient = await clientPromise;
       const db = mongoClient.db(process.env.MONGODB_DB_NAME);
-      
-      // Fetch blog data
+
       const blogsCollection = db.collection('blogs');
-      blogsCount = await blogsCollection.countDocuments({
-        project_id: projectId,
-        is_active: { $ne: false }
-      });
-      recentBlogs = await blogsCollection
-        .find({
+      const scrapedCollection = db.collection('scraped_content');
+
+      // Run all MongoDB queries in parallel for better performance
+      const [count, blogs, scrapedDoc] = await Promise.all([
+        blogsCollection.countDocuments({
           project_id: projectId,
           is_active: { $ne: false }
-        })
-        .sort({ created_at: -1 })
-        .skip(skip)
-        .limit(limit)
-        .project({ _id: 1, title: 1, status: 1, word_count: 1, created_at: 1 })
-        .toArray();
+        }),
+        blogsCollection
+          .find({
+            project_id: projectId,
+            is_active: { $ne: false }
+          })
+          .sort({ created_at: -1 })
+          .skip(skip)
+          .limit(limit)
+          .project({ _id: 1, title: 1, status: 1, word_count: 1, created_at: 1 })
+          .toArray(),
+        scrapedCollection.findOne(
+          { project_id: projectId },
+          { projection: { html_content: 1 } }
+        )
+      ]);
 
-      // Fetch scraped content
-      const scrapedCollection = db.collection('scraped_content');
-      const scrapedDoc = await scrapedCollection.findOne(
-        { project_id: projectId },
-        { projection: { html_content: 1 } }
-      );
+      blogsCount = count;
+      recentBlogs = blogs;
       if (scrapedDoc) {
         scrapedContent = scrapedDoc.html_content;
       }
 
     } catch (mongoError) {
       console.error(`[PROJECT/${projectId}] Error fetching MongoDB data:`, mongoError);
+      // Return empty data on error but don't fail the entire request
     }
 
     console.log(`[PROJECT/${projectId}] Returning response with ${blogsCount} blogs`);
