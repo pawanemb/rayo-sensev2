@@ -211,7 +211,7 @@ export default function ActiveUsers() {
         </span>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent">
         {/* Render actual active users */}
         {activeUsersData && activeUsersData.active_users.map((user) => {
           const isNewUser = newUserIds.has(user.user_id);
@@ -263,35 +263,6 @@ export default function ActiveUsers() {
           </div>
           );
         })}
-
-        {/* Render empty placeholder cards to make minimum 4 cards */}
-        {Array.from({ length: Math.max(0, 4 - (activeUsersData?.active_users.length || 0)) }).map((_, index) => (
-          <div
-            key={`empty-${index}`}
-            className="flex items-start gap-4 p-3.5 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-800/10"
-          >
-            {/* Empty Avatar */}
-            <div className="flex-shrink-0 relative">
-              <div className="relative w-10 h-10 overflow-hidden rounded-full border border-dashed border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                <svg className="w-5 h-5 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-            </div>
-
-            {/* Empty User Info */}
-            <div className="flex-1 min-w-0">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2"></div>
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
-            </div>
-
-            {/* Empty Last Activity */}
-            <div className="flex-shrink-0 text-right">
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   );

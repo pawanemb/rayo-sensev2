@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { FaExternalLinkAlt } from 'react-icons/fa';
+import { FaExternalLinkAlt, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 interface IPDetails {
   country: string;
@@ -23,24 +23,52 @@ interface FormSubmission {
   ipDetails?: IPDetails | null;
 }
 
+interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalSubmissions: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
 const RecentFormSubmissions = () => {
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    currentPage: 1,
+    totalPages: 1,
+    totalSubmissions: 0,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
 
   useEffect(() => {
-    fetchRecentSubmissions();
+    fetchSubmissions(1);
   }, []);
 
-  const fetchRecentSubmissions = async () => {
+  const fetchSubmissions = async (page: number) => {
     try {
       setLoading(true);
-      const response = await fetch('/api/form-submissions?page=1&limit=4');
+      const response = await fetch(`/api/form-submissions?page=${page}&limit=4`);
       const data = await response.json();
       setSubmissions(data.submissions || []);
+      setPagination(data.pagination || {
+        currentPage: page,
+        totalPages: 1,
+        totalSubmissions: 0,
+        hasNextPage: false,
+        hasPrevPage: false
+      });
     } catch (error) {
-      console.error('Error fetching recent form submissions:', error);
+      console.error('Error fetching form submissions:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      fetchSubmissions(newPage);
     }
   };
 
@@ -182,6 +210,33 @@ const RecentFormSubmissions = () => {
               </div>
             </Link>
           ))}
+        </div>
+      )}
+
+      {/* Compact Pagination */}
+      {!loading && pagination.totalSubmissions > 4 && (
+        <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-3 dark:border-gray-700">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Page {pagination.currentPage} of {pagination.totalPages}
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => handlePageChange(pagination.currentPage - 1)}
+              disabled={!pagination.hasPrevPage}
+              className="flex h-7 w-7 items-center justify-center rounded border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+              aria-label="Previous page"
+            >
+              <FaChevronLeft className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => handlePageChange(pagination.currentPage + 1)}
+              disabled={!pagination.hasNextPage}
+              className="flex h-7 w-7 items-center justify-center rounded border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+              aria-label="Next page"
+            >
+              <FaChevronRight className="h-3 w-3" />
+            </button>
+          </div>
         </div>
       )}
     </div>
