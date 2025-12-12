@@ -636,7 +636,7 @@ export default function AiPlaygroundInterface() {
       </div>
 
       {/* Right Column: Responses */}
-      <div className="lg:col-span-8 h-full overflow-y-auto custom-scrollbar space-y-6">
+      <div className="lg:col-span-8 h-full overflow-y-auto custom-scrollbar space-y-3">
         {selectedModels.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-gray-400">
             <span className="text-4xl mb-4">🤖</span>
@@ -646,13 +646,13 @@ export default function AiPlaygroundInterface() {
           selectedModels.map(modelId => {
             const model = getModelInfo(modelId);
             return (
-              <div key={modelId} className="min-h-[400px]">
-                <div className="mb-2 flex items-center gap-2">
-                  <span className="text-xl">{model?.icon}</span>
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+              <div key={modelId}>
+                <div className="mb-1 flex items-center gap-2 px-1">
+                  <span className="text-lg">{model?.icon}</span>
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                     {model?.name}
                   </h3>
-                  <span className="text-xs text-gray-400 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded">
+                  <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
                     {model?.id}
                   </span>
                 </div>
