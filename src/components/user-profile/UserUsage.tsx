@@ -44,18 +44,34 @@ export default function UserUsage({ userId }: UserUsageProps) {
   const fetchUsage = async (page: number = 1) => {
     setIsLoading(true);
     try {
+      console.log('🔵 [UserUsage] Fetching usage - Page:', page, 'Limit:', usagePerPage);
       const response = await fetch(`/api/users/${userId}/usage?page=${page}&limit=${usagePerPage}`);
       if (response.ok) {
         const data = await response.json();
+        console.log('🔵 [UserUsage] API Response:', {
+          recordsReceived: data.usage?.length || 0,
+          totalUsage: data.totalUsage,
+          currentPage: data.currentPage,
+          totalPages: data.totalPages,
+          totalBaseCost: data.totalBaseCost,
+          totalActualCharge: data.totalActualCharge
+        });
+        console.log('🔵 [UserUsage] First 3 records:', data.usage?.slice(0, 3));
+
         setUsage(data.usage || []);
         setTotalUsage(data.totalUsage || 0);
         setCurrentPage(data.currentPage || 1);
         setTotalPages(data.totalPages || 1);
         setTotalBaseCost(data.totalBaseCost || 0);
         setTotalActualCharge(data.totalActualCharge || 0);
+
+        console.log('🔵 [UserUsage] State updated - Displaying totals:', {
+          baseCost: data.totalBaseCost,
+          actualCharge: data.totalActualCharge
+        });
       }
     } catch (error) {
-      console.error('Failed to fetch usage:', error);
+      console.error('❌ [UserUsage] Failed to fetch usage:', error);
     } finally {
       setIsLoading(false);
     }
@@ -102,11 +118,18 @@ export default function UserUsage({ userId }: UserUsageProps) {
   const exportToCSV = async () => {
     setIsExporting(true);
     try {
+      console.log('📊 [UserUsage] Starting CSV export for user:', userId);
       // Fetch ALL usage records
       const response = await fetch(`/api/users/${userId}/usage?page=1&limit=999999`);
       if (response.ok) {
         const data = await response.json();
         const allRecords = data.usage || [];
+
+        console.log('📊 [UserUsage] Export data received:', {
+          totalRecords: allRecords.length,
+          totalBaseCost: data.totalBaseCost,
+          totalActualCharge: data.totalActualCharge
+        });
 
         // Convert to CSV
         const headers = ['Service', 'Project', 'Project URL', 'Base Cost', 'Multiplier', 'Actual Charge', 'Date', 'Usage Data'];
@@ -124,6 +147,8 @@ export default function UserUsage({ userId }: UserUsageProps) {
           ].join(','))
         ].join('\n');
 
+        console.log('📊 [UserUsage] CSV generated with', allRecords.length, 'records');
+
         // Download file
         const blob = new Blob([csvContent], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
@@ -134,9 +159,11 @@ export default function UserUsage({ userId }: UserUsageProps) {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
+
+        console.log('✅ [UserUsage] CSV export completed successfully');
       }
     } catch (error) {
-      console.error('Failed to export usage:', error);
+      console.error('❌ [UserUsage] Failed to export usage:', error);
     } finally {
       setIsExporting(false);
     }
