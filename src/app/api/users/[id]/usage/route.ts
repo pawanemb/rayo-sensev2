@@ -8,7 +8,7 @@ export async function GET(
   try {
     const resolvedParams = await params;
     const { searchParams } = new URL(request.url);
-    
+
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '5');
     const offset = (page - 1) * limit;
@@ -20,12 +20,19 @@ export async function GET(
       .eq('user_id', resolvedParams.id);
 
     // Get paginated usage records
-    const { data: usage, error } = await supabaseAdmin
+    // If limit is very high (for export), fetch all records
+    let usageQuery = supabaseAdmin
       .from('usage')
       .select('*, projects(name, url)')
       .eq('user_id', resolvedParams.id)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .order('created_at', { ascending: false });
+
+    // Only apply range if limit is reasonable
+    if (limit < 10000) {
+      usageQuery = usageQuery.range(offset, offset + limit - 1);
+    }
+
+    const { data: usage, error } = await usageQuery;
 
     if (error) {
       console.error('Error fetching usage:', error);

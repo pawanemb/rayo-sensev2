@@ -38,7 +38,8 @@ export default function UserUsage({ userId }: UserUsageProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [totalBaseCost, setTotalBaseCost] = useState(0);
   const [totalActualCharge, setTotalActualCharge] = useState(0);
-  const usagePerPage = 5;
+  const [usagePerPage, setUsagePerPage] = useState(5);
+  const [isExporting, setIsExporting] = useState(false);
 
   const fetchUsage = async (page: number = 1) => {
     setIsLoading(true);
@@ -63,7 +64,7 @@ export default function UserUsage({ userId }: UserUsageProps) {
   useEffect(() => {
     fetchUsage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, usagePerPage]);
 
   const formatDate = (dateString?: string | null) => {
     if (!dateString) return "N/A";
@@ -92,30 +93,108 @@ export default function UserUsage({ userId }: UserUsageProps) {
     fetchUsage(page);
   };
 
+  const handleLimitChange = (newLimit: number) => {
+    setUsagePerPage(newLimit);
+    setCurrentPage(1);
+    fetchUsage(1);
+  };
+
+  const exportToCSV = async () => {
+    setIsExporting(true);
+    try {
+      // Fetch ALL usage records
+      const response = await fetch(`/api/users/${userId}/usage?page=1&limit=999999`);
+      if (response.ok) {
+        const data = await response.json();
+        const allRecords = data.usage || [];
+
+        // Convert to CSV
+        const headers = ['Service', 'Project', 'Project URL', 'Base Cost', 'Multiplier', 'Actual Charge', 'Date', 'Usage Data'];
+        const csvContent = [
+          headers.join(','),
+          ...allRecords.map((record: UsageRecord) => [
+            `"${record.service_name.replace(/_/g, ' ')}"`,
+            `"${record.projects?.name || 'N/A'}"`,
+            `"${record.projects?.url || 'N/A'}"`,
+            record.base_cost,
+            record.multiplier,
+            record.actual_charge,
+            `"${formatDate(record.created_at)}"`,
+            `"${record.usage_data ? record.usage_data.replace(/"/g, '""') : 'N/A'}"`
+          ].join(','))
+        ].join('\n');
+
+        // Download file
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `usage-history-${userId}-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Failed to export usage:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div className="mb-6 flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Usage History
-          </h2>
-          <span className="inline-flex items-center rounded-full bg-brand-100 px-3 py-1 text-sm font-medium text-brand-700 dark:bg-brand-900/30 dark:text-brand-400">
-            {totalUsage} {totalUsage === 1 ? 'Record' : 'Records'}
-          </span>
+      <div className="mb-6 space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Usage History
+            </h2>
+            <span className="inline-flex items-center rounded-full bg-brand-100 px-3 py-1 text-sm font-medium text-brand-700 dark:bg-brand-900/30 dark:text-brand-400">
+              {totalUsage} {totalUsage === 1 ? 'Record' : 'Records'}
+            </span>
+          </div>
+          {!isLoading && usage.length > 0 && (
+            <button
+              onClick={exportToCSV}
+              disabled={isExporting}
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isExporting ? 'Exporting...' : 'Export All to CSV'}
+            </button>
+          )}
         </div>
+
         {!isLoading && usage.length > 0 && (
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Total Base Cost:</span>
-              <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                {formatCurrency(totalBaseCost)}
-              </span>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Total Base Cost:</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {formatCurrency(totalBaseCost)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Total Actual Charge:</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {formatCurrency(totalActualCharge)}
+                </span>
+              </div>
             </div>
+
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Total Actual Charge:</span>
-              <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                {formatCurrency(totalActualCharge)}
-              </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">Show:</span>
+              <select
+                value={usagePerPage}
+                onChange={(e) => handleLimitChange(Number(e.target.value))}
+                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                <option value={5}>5 per page</option>
+                <option value={10}>10 per page</option>
+                <option value={25}>25 per page</option>
+                <option value={50}>50 per page</option>
+                <option value={100}>100 per page</option>
+              </select>
             </div>
           </div>
         )}
