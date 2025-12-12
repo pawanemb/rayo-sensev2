@@ -78,7 +78,8 @@ export default function ResponseTabs({ content }: ResponseTabsProps) {
                 blockquote({children}) {
                   return <blockquote className="border-l-4 border-gray-300 dark:border-gray-700 pl-4 italic my-4 text-gray-600 dark:text-gray-400">{children}</blockquote>
                 },
-                code({node, inline, className, children, ...props}: any) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                code({inline, className, children, ...props}: {inline?: boolean; className?: string; children?: React.ReactNode; [key: string]: any}) {
                   return !inline ? (
                     <div className="my-4 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                       <pre className="bg-gray-50 dark:bg-gray-900 p-4 overflow-x-auto text-sm font-mono m-0">

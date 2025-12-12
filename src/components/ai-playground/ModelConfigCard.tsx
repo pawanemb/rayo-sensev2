@@ -5,12 +5,27 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { IoSettingsOutline } from 'react-icons/io5';
-import { AVAILABLE_MODELS, ModelInfo } from '@/lib/constants/models';
+import { AVAILABLE_MODELS } from '@/lib/constants/models';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface ModelConfig {
+  temperature?: number;
+  maxTokens?: number;
+  reasoningEffort?: 'minimal' | 'low' | 'medium' | 'high';
+  reasoningSummary?: 'auto' | 'concise' | 'detailed';
+  responseFormat?: 'text' | 'json_object' | 'json_schema';
+  webSearch?: boolean;
+  store?: boolean;
+  enableThinking?: boolean;
+  thinkingBudget?: number;
+  verbosity?: 'low' | 'medium' | 'high';
+  [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+}
 
 interface ModelConfigCardProps {
   modelId: string;
-  config: any;
-  updateConfig: (updates: any) => void;
+  config: ModelConfig;
+  updateConfig: (updates: Partial<ModelConfig>) => void;
 }
 
 export default function ModelConfigCard({
@@ -104,11 +119,12 @@ export default function ModelConfigCard({
                         if (modelId.includes('gpt-5-mini')) efforts = ['minimal', 'low', 'medium', 'high'];
                         if (modelId.includes('o4-mini-deep-research')) efforts = ['medium'];
                         
-                        return efforts.map((effort: any) => (
+                        return efforts.map((effort: string) => (
                       <button
                         key={effort}
                         type="button"
-                        onClick={() => updateConfig({ reasoningEffort: effort })}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        onClick={() => updateConfig({ reasoningEffort: effort as any })}
                         className={`flex-1 text-[10px] uppercase py-1 rounded border transition-colors ${
                           config.reasoningEffort === effort
                             ? 'bg-brand-500 text-white border-brand-500'
@@ -134,11 +150,12 @@ export default function ModelConfigCard({
                           summaries = ['detailed'];
                         }
                         
-                        return summaries.map((summary: any) => (
+                        return summaries.map((summary: string) => (
                       <button
                         key={summary}
                         type="button"
-                        onClick={() => updateConfig({ reasoningSummary: summary })}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        onClick={() => updateConfig({ reasoningSummary: summary as any })}
                         className={`flex-1 text-[10px] uppercase py-1 rounded border transition-colors ${
                           config.reasoningSummary === summary
                             ? 'bg-brand-500 text-white border-brand-500'
@@ -160,8 +177,9 @@ export default function ModelConfigCard({
                     <select
                         value={config.responseFormat || 'text'}
                         onChange={(e) => {
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             const newFormat = e.target.value as any;
-                            const updates: any = { responseFormat: newFormat };
+                            const updates: Partial<ModelConfig> = { responseFormat: newFormat };
                             // Disable web search if JSON mode is selected
                             if (newFormat === 'json_object' || newFormat === 'json_schema') {
                                 updates.webSearch = false;
@@ -181,6 +199,7 @@ export default function ModelConfigCard({
                         <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Verbosity</label>
                         <select
                             value={config.verbosity || 'medium'}
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             onChange={(e) => updateConfig({ verbosity: e.target.value as any })}
                             className="w-full p-1.5 text-xs rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 focus:ring-1 focus:ring-brand-500 outline-none"
                         >

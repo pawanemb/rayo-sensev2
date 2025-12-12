@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { OpenAIService } from '@/lib/services/openai.service';
+import { OpenAIService, ChatCompletionParams } from '@/lib/services/openai.service';
 
 export const runtime = 'edge';
 
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     // Initialize Service pointing to OpenRouter with headers
     const service = new OpenAIService(apiKey, 'https://openrouter.ai/api/v1', headers);
 
-    const params: any = {
+    const params: ChatCompletionParams = {
       model,
       messages,
       stream: true,
@@ -43,10 +43,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AI Playground OpenRouter Route] Error:', error);
-    const errorMessage = error.message || 'Internal Server Error';
-    const status = error.response?.status || 500;
+    const errorMessage = error instanceof Error ? error.message : 'Internal Server Error';
+    const status = (error as { response?: { status?: number } }).response?.status || 500;
     return NextResponse.json({ error: errorMessage }, { status });
   }
 }

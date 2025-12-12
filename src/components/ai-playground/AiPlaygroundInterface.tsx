@@ -73,7 +73,7 @@ export default function AiPlaygroundInterface() {
           );
           const isOSeries = id.startsWith('o1') || id.startsWith('o3') || id.startsWith('o4');
           
-          let specificConfig = { ...DEFAULT_CONFIG };
+          const specificConfig = { ...DEFAULT_CONFIG };
 
           // Auto-enable web search for deep research models (required)
           if (id.includes('deep-research')) {
@@ -183,7 +183,7 @@ export default function AiPlaygroundInterface() {
       // New: Check for generic OpenAI interface to enable advanced params
       const isOpenAI = modelInfo.interface === 'openai-api' || modelInfo.interface === 'openai-standard' || modelInfo.interface === 'gpt-5';
 
-      const body: any = {
+      const body: Record<string, unknown> = {
         model: modelId,
         messages,
         stream: true,
@@ -285,7 +285,7 @@ export default function AiPlaygroundInterface() {
                 fullContent += content;
                 setResponses(prev => ({ ...prev, [modelId]: fullContent }));
               }
-            } catch (e) {
+            } catch {
               // Ignore parse errors
             }
           }
@@ -294,9 +294,10 @@ export default function AiPlaygroundInterface() {
 
       setMetrics(prev => ({ ...prev, [modelId]: { time: (Date.now() - startTime) / 1000 } }));
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(`Error generating for ${modelId}:`, err);
-      setErrors(prev => ({ ...prev, [modelId]: err.message || 'An error occurred' }));
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setErrors(prev => ({ ...prev, [modelId]: errorMessage }));
     } finally {
       setLoading(prev => ({ ...prev, [modelId]: false }));
     }

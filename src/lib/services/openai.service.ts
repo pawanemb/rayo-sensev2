@@ -20,7 +20,7 @@ export class OpenAIService {
     this.extraHeaders = extraHeaders;
   }
 
-  private async post(endpoint: string, body: any): Promise<any> {
+  private async post(endpoint: string, body: Record<string, unknown>): Promise<Response> {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'POST',
       headers: {
@@ -69,7 +69,7 @@ export class OpenAIService {
       // 2. Retry without reasoning_effort if that was the issue
       if (isReasoningError && params.reasoning_effort) {
         console.log('[OpenAIService] Retrying without reasoning_effort...');
-        const { reasoning_effort, ...paramsWithoutReasoning } = params;
+        const { reasoning_effort: _reasoning_effort, ...paramsWithoutReasoning } = params;
         
         try {
           return await this.createChatCompletion(paramsWithoutReasoning);
@@ -96,7 +96,7 @@ export class OpenAIService {
         // o1-mini also doesn't support reasoning_effort (yet? or maybe it does).
         // To be safe, if we hit a role error, let's try the most compatible fallback: No System + No Reasoning.
         
-        const { reasoning_effort, ...paramsWithoutReasoning } = params;
+        const { reasoning_effort: _reasoning_effort, ...paramsWithoutReasoning } = params;
         return await this.createChatCompletionWithoutSystem(paramsWithoutReasoning);
       }
 
@@ -112,7 +112,7 @@ export class OpenAIService {
     return this.post('/chat/completions', params);
   }
 
-  async createResponse(params: any): Promise<Response> {
+  async createResponse(params: Record<string, unknown>): Promise<Response> {
     return this.post('/responses', params);
   }
 

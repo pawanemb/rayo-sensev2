@@ -20,7 +20,7 @@ export class GeminiService {
   }): Promise<ReadableStream> {
     
     // Map messages
-    const contents: any[] = [];
+    const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
     let systemInstruction: string | undefined = undefined;
 
     for (const msg of params.messages) {
@@ -37,7 +37,7 @@ export class GeminiService {
     }
 
     // Config
-    const config: any = {
+    const config: GenerateContentConfig & { thinkingConfig?: any } = {
       temperature: params.temperature,
       maxOutputTokens: params.max_tokens,
     };
@@ -119,15 +119,15 @@ export class GeminiService {
             }
         });
 
-    } catch (error: any) {
-        let message = error.message || 'Gemini SDK Error';
+    } catch (error: unknown) {
+        let message = error instanceof Error ? error.message : 'Gemini SDK Error';
         try {
             // Attempt to parse JSON error message from SDK
             const parsed = JSON.parse(message);
             if (parsed.error && parsed.error.message) {
                 message = parsed.error.message;
             }
-        } catch (e) {
+        } catch {
             // Not JSON, use original message
         }
 
@@ -135,9 +135,9 @@ export class GeminiService {
         if (message.includes('404') || message.includes('not found')) {
             try {
                 const list = await this.client.models.list();
-                const modelNames = list.page.map((m: any) => m.name).join(', ');
+                const modelNames = list.page.map(m => m.name || '').filter(Boolean).join(', ');
                 message += `\nAvailable models (partial): ${modelNames}`;
-            } catch (listError) {
+            } catch {
                 // Ignore list error
             }
         }

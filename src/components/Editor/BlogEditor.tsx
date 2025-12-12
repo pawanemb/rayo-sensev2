@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 
 import { RichTextProvider } from 'reactjs-tiptap-editor'
 
@@ -402,8 +402,8 @@ function App() {
   const [content, setContent] = useState(DEFAULT)
   const [theme, setTheme] = useState('light')
 
-  const onValueChange = useCallback(
-    debounce<(value: string) => void>((value: string) => {
+  const onValueChange = useMemo(
+    () => debounce<(value: string) => void>((value: string) => {
       setContent(value)
     }, 300),
     [setContent],

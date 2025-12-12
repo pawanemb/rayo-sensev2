@@ -53,7 +53,7 @@ export class AnthropicService {
       }
       
       const error = new Error(errorMessage);
-      (error as any).response = { data: errorData, status: response.status };
+      (error as { response?: unknown }).response = { data: errorData, status: response.status };
       throw error;
     }
 

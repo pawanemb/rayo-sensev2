@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Image from 'next/image';
 
 interface PrimaryKeyword {
   keyword: string;
@@ -999,10 +1000,14 @@ export default function StepDetails({ selectedStep, blog }: StepDetailsProps) {
             </svg>
             Featured Image
           </h3>
-          <img
+          <Image
             src={blog.rayo_featured_image.url}
             alt="Featured"
-            className="w-full rounded-lg border border-gray-200 dark:border-gray-700"
+            width={0}
+            height={0}
+            sizes="100vw"
+            className="w-full h-auto rounded-lg border border-gray-200 dark:border-gray-700"
+            unoptimized
           />
           {blog.rayo_featured_image.filename && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">

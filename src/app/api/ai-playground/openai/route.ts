@@ -25,13 +25,13 @@ export async function POST(req: NextRequest) {
     const isRestrictedTemp = model.startsWith('o1') || model.startsWith('o3') || model.startsWith('o4') || model.startsWith('gpt-5');
 
     // Handle JSON constraints
-    let finalMessages = [...messages];
-    let formatConfig: any = null;
+    const finalMessages = [...messages];
+    let formatConfig: Record<string, unknown> | null = null;
 
     if (responseFormat === 'json_object') {
        formatConfig = { type: 'json_object' };
        // Ensure 'json' is mentioned in prompt
-       const hasJson = messages.some((m: any) => m.content.toLowerCase().includes('json'));
+       const hasJson = messages.some((m: { content: string }) => m.content.toLowerCase().includes('json'));
        if (!hasJson) {
          finalMessages.push({ role: 'system', content: 'Please output valid JSON.' });
        }
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     // If text, we don't send format config to avoid 'missing schema' error
 
     // Construct advanced payload for /v1/responses (Unified for all models)
-    const advancedPayload: any = {
+    const advancedPayload: Record<string, any> = {
       model,
       input: finalMessages, 
       reasoning: {
@@ -66,12 +66,12 @@ export async function POST(req: NextRequest) {
     };
 
     // Construct text object
-    const textObj: any = {};
+    const textObj: Record<string, unknown> = {};
     if (formatConfig) {
-      textObj.format = formatConfig;
+      textObj['format'] = formatConfig;
     }
     if (verbosity) {
-      textObj.verbosity = verbosity;
+      textObj['verbosity'] = verbosity;
     }
     
     // Only add text object if it has properties
@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-  } catch (error: any) {
+  } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     console.error('[AI Playground Route] Error:', error);
     
     const errorMessage = error.message || 'Internal Server Error';

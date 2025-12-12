@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 
 // Dynamically import Editor with no SSR
 const Editor = dynamic(() => import('@/components/Editor/Editor'), {
@@ -416,11 +417,14 @@ export default function BlogDetailPage() {
             </button>
 
             {/* Full-size image */}
-            <img
+            <Image
               src={getFeaturedImageUrl()!}
               alt={getTitle()}
-              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg w-auto h-auto"
               onClick={(e) => e.stopPropagation()}
+              width={1200}
+              height={800}
+              unoptimized
             />
 
             {/* Image metadata */}

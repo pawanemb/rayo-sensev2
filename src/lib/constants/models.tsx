@@ -1,8 +1,7 @@
 
-import { SiOpenai, SiAnthropic, SiGoogle, SiMeta } from "react-icons/si";
+import { SiOpenai, SiAnthropic, SiGoogle } from "react-icons/si";
 import { BsRobot, BsCpu, BsLightningCharge, BsCodeSquare } from "react-icons/bs";
 import { TbNetwork } from "react-icons/tb";
-import { RiSparklingFill } from "react-icons/ri";
 
 // API Provider/Interface configurations
 export type ApiInterface = 

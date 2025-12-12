@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ApiInterface, API_INTERFACES, AVAILABLE_MODELS } from '@/lib/constants/models';
+import { API_INTERFACES, AVAILABLE_MODELS } from '@/lib/constants/models';
 
 interface MultiModelSelectorProps {
   selectedModels: string[];

@@ -34,10 +34,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AI Playground Anthropic Route] Error:', error);
-    const errorMessage = error.message || 'Internal Server Error';
-    const status = error.response?.status || 500;
+    const errorMessage = error instanceof Error ? error.message : 'Internal Server Error';
+    const status = (error as { response?: { status?: number } }).response?.status || 500;
     return NextResponse.json({ error: errorMessage }, { status });
   }
 }
