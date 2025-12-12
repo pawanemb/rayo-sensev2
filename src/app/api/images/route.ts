@@ -43,11 +43,41 @@ export async function GET(request: NextRequest) {
 
     let images, error, count;
     if (search) {
-      // Fetch all records when searching (we'll filter and paginate in JS)
-      const result = await query.limit(1000);
-      images = result.data;
-      error = result.error;
-      count = result.count;
+      // Fetch all records when searching in batches (we'll filter and paginate in JS)
+      console.log('[IMAGES] Fetching all images for search...');
+      images = [];
+      let currentOffset = 0;
+      const batchSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const batchQuery = query.range(currentOffset, currentOffset + batchSize - 1);
+        const result = await batchQuery;
+
+        if (result.error) {
+          error = result.error;
+          break;
+        }
+
+        if (result.data && result.data.length > 0) {
+          images = [...images, ...result.data];
+          console.log(`[IMAGES] Batch fetched: ${result.data.length} (Total: ${images.length})`);
+          currentOffset += batchSize;
+
+          if (result.data.length < batchSize) {
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
+
+        // Store count from first batch
+        if (currentOffset === batchSize && result.count !== null) {
+          count = result.count;
+        }
+      }
+
+      console.log('[IMAGES] Total images fetched for search:', images.length);
     } else {
       // Use database-level pagination when not searching
       const from = (page - 1) * limit;
