@@ -157,9 +157,8 @@ const RecentFormSubmissions = () => {
       ) : (
         <div className="space-y-3">
           {submissions.map((submission) => (
-            <Link
+            <div
               key={submission.id}
-              href="/forms"
               className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800"
             >
               <Image
@@ -180,7 +179,6 @@ const RecentFormSubmissions = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 flex items-center truncate max-w-[200px]"
-                    onClick={(e) => e.stopPropagation()}
                   >
                     {submission.website}
                     <FaExternalLinkAlt className="ml-1 h-2 w-2 flex-shrink-0" />
@@ -207,7 +205,7 @@ const RecentFormSubmissions = () => {
                   {formatDateTime(submission.created_at)}
                 </span>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}

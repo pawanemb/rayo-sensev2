@@ -5,8 +5,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import { BsFillGrid3X3GapFill } from "react-icons/bs";
-import { IoDocumentTextOutline, IoImagesOutline } from "react-icons/io5";
-import { FaChevronDown, FaCube, FaRegUserCircle, FaWpforms, FaListAlt } from "react-icons/fa";
+import { IoChatbubblesOutline, IoDocumentTextOutline, IoImagesOutline, IoFlaskOutline } from "react-icons/io5";
+import { FaChevronDown, FaCube, FaListAlt, FaRegUserCircle, FaWpforms } from "react-icons/fa";
 import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
@@ -22,6 +22,11 @@ const navItems: NavItem[] = [
     name: "Dashboard",
     path: "/",
     },
+  {
+    icon: <IoFlaskOutline />,
+    name: "AI Playground",
+    path: "/ai-playground",
+  },
   {
     icon: <FaRegUserCircle />,
     name: "Users",
