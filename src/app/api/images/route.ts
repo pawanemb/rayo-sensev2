@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     // Otherwise use pagination at database level
     query = query.order('created_at', { ascending: false });
 
-    let images, error, count;
+    let images: any, error: any, count: any;
     if (search) {
       // Fetch all records when searching in batches (we'll filter and paginate in JS)
       console.log('[IMAGES] Fetching all images for search...');
@@ -94,8 +94,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get unique project IDs and user IDs
-    const projectIds = [...new Set((images || []).map(img => img.project_id).filter(Boolean))];
-    const userIds = [...new Set((images || []).map(img => img.user_id).filter(Boolean))];
+    const projectIds = [...new Set((images || []).map((img: any) => img.project_id).filter(Boolean))];
+    const userIds = [...new Set((images || []).map((img: any) => img.user_id).filter(Boolean))] as string[];
 
     // Fetch projects data
     const projectsMap = new Map();
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Attach project and user data to images
-    let imagesWithDetails = (images || []).map(image => ({
+    let imagesWithDetails = (images || []).map((image: any) => ({
       ...image,
       project: projectsMap.get(image.project_id) || null,
       user: usersMap.get(image.user_id) || null,
@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
 
     // If search term exists, filter by ALL fields including joined data
     if (search) {
-      imagesWithDetails = imagesWithDetails.filter(image => {
+      imagesWithDetails = imagesWithDetails.filter((image: any) => {
         const searchLower = search.toLowerCase();
 
         // Check project fields
