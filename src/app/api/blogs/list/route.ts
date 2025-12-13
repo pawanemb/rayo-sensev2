@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 // Helper function to verify authentication
 const verifyAuth = async (request: NextRequest) => {
   // Get token from cookies
-  const token = request.cookies.get('supabase-auth-token')?.value;
+  const token = request.cookies.get('_auth')?.value;
   
   if (!token) {
     return null;

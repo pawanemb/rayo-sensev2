@@ -5,7 +5,7 @@ import { ObjectId } from 'mongodb';
 
 // Helper function to verify authentication
 const verifyAuth = async (request: NextRequest) => {
-  const token = request.cookies.get('supabase-auth-token')?.value;
+  const token = request.cookies.get('_auth')?.value;
   
   if (!token) {
     return null;
