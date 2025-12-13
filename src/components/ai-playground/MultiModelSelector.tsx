@@ -1,7 +1,7 @@
-
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { API_INTERFACES, AVAILABLE_MODELS } from '@/lib/constants/models';
 
@@ -31,6 +31,10 @@ export default function MultiModelSelector({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedInterface, setSelectedInterface] = useState<string>('all');
   
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
   const filteredModels = AVAILABLE_MODELS.filter(model => {
     const matchesSearch = model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          model.id.toLowerCase().includes(searchQuery.toLowerCase());
@@ -69,13 +73,47 @@ export default function MultiModelSelector({
     }
     return `${selectedModels.length} models selected`;
   };
+
+  const toggleOpen = () => {
+    if (!isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + 8, // mt-2 equivalent
+        left: rect.left
+      });
+    }
+    setIsOpen(!isOpen);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      const handleScroll = (event: Event) => {
+        // Ignore scroll events originating from inside the dropdown
+        if (dropdownRef.current && dropdownRef.current.contains(event.target as Node)) {
+          return;
+        }
+        setIsOpen(false);
+      };
+      const handleResize = () => setIsOpen(false);
+      
+      // Use capture to detect scroll in any container
+      window.addEventListener('scroll', handleScroll, { capture: true });
+      window.addEventListener('resize', handleResize);
+      
+      return () => {
+        window.removeEventListener('scroll', handleScroll, { capture: true });
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, [isOpen]);
   
   return (
     <div className="relative">
       {/* Selected Models Button */}
       <Button
+        ref={buttonRef}
         variant="outline"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleOpen}
         className="flex items-center gap-2 h-10 px-4 min-w-[200px]"
       >
         <div className="flex items-center gap-1">
@@ -96,17 +134,24 @@ export default function MultiModelSelector({
         </svg>
       </Button>
       
-      {/* Dropdown */}
-      {isOpen && (
+      {/* Dropdown - Using Portal to avoid clipping and z-index issues */}
+      {isOpen && typeof document !== 'undefined' && createPortal(
         <>
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 z-40" 
+            className="fixed inset-0 z-[9998]" 
             onClick={() => setIsOpen(false)}
           />
           
           {/* Dropdown Content */}
-          <div className="absolute top-full left-0 mt-2 w-[520px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-50 overflow-hidden">
+          <div 
+            ref={dropdownRef}
+            className="fixed w-[520px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-[9999] overflow-hidden"
+            style={{
+              top: coords.top,
+              left: coords.left,
+            }}
+          >
             {/* Header */}
             <div className="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
               <div className="flex items-center justify-between mb-2">
@@ -252,7 +297,8 @@ export default function MultiModelSelector({
               </div>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
