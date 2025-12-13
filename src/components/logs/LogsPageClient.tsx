@@ -43,6 +43,8 @@ export default function LogsPageClient() {
   const [errorLogsTotal, setErrorLogsTotal] = useState(0);
   const [errorLogsTotalPages, setErrorLogsTotalPages] = useState(0);
   const [showScrapeModal, setShowScrapeModal] = useState(false);
+  const [showResponseModal, setShowResponseModal] = useState(false);
+  const [selectedResponse, setSelectedResponse] = useState<{ content: string; url: string } | null>(null);
 
   const limit = 10;
 
@@ -186,6 +188,11 @@ export default function LogsPageClient() {
         Browser
       </span>
     );
+  };
+
+  const handleViewResponse = (content: string, url: string) => {
+    setSelectedResponse({ content, url });
+    setShowResponseModal(true);
   };
 
   const currentPage = activeTab === "scrape_requests" ? scrapeRequestsPage : errorLogsPage;
@@ -425,6 +432,7 @@ export default function LogsPageClient() {
                     <TableCell className="px-2 py-1.5 w-[110px]">Method/Status</TableCell>
                     <TableCell className="px-2 py-1.5 w-[90px]">Duration/Cache</TableCell>
                     <TableCell className="px-2 py-1.5 w-[50px]">Proxy</TableCell>
+                    <TableCell className="px-2 py-1.5 w-[70px]">Response</TableCell>
                     <TableCell className="px-2 py-1.5 min-w-[160px]">User</TableCell>
                     <TableCell className="px-2 py-1.5 min-w-[160px]">Project</TableCell>
                     <TableCell className="px-2 py-1.5 min-w-[140px]">Blog</TableCell>
@@ -432,12 +440,12 @@ export default function LogsPageClient() {
                   </TableRow>
                 </TableHeader>
                 {loading || scrapeRequestsLoading ? (
-                  <TableSkeleton rows={10} columns={9} variant="logs" />
+                  <TableSkeleton rows={10} columns={10} variant="logs" />
                 ) : (
                   <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
                     {scrapeRequests.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="px-5 py-8 text-center text-xs text-gray-500 dark:text-gray-400">
+                        <TableCell colSpan={10} className="px-5 py-8 text-center text-xs text-gray-500 dark:text-gray-400">
                           No scrape requests found.
                         </TableCell>
                       </TableRow>
@@ -505,6 +513,22 @@ export default function LogsPageClient() {
                                   </svg>
                                 </span>
                               )
+                            ) : (
+                              <span className="text-[11px] text-gray-400 dark:text-gray-500">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="px-2 py-1.5">
+                            {request.response_content && request.response_content.trim() ? (
+                              <button
+                                onClick={() => handleViewResponse(request.response_content, request.url)}
+                                className="inline-flex items-center gap-1 rounded-md bg-indigo-100 px-2 py-1 text-[10px] font-medium text-indigo-700 transition-colors hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
+                              >
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                View
+                              </button>
                             ) : (
                               <span className="text-[11px] text-gray-400 dark:text-gray-500">—</span>
                             )}
@@ -906,6 +930,74 @@ export default function LogsPageClient() {
             {/* Modal Content */}
             <div className="p-6">
               <WebScraper />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Response Content Modal */}
+      {showResponseModal && selectedResponse && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => setShowResponseModal(false)}
+        >
+          <div
+            className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-md flex-shrink-0">
+                  <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Response Content</h2>
+                  <a
+                    href={selectedResponse.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline truncate block"
+                  >
+                    {selectedResponse.url}
+                  </a>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowResponseModal(false)}
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300 flex-shrink-0 ml-4"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="overflow-y-auto max-h-[calc(90vh-100px)] p-6">
+              <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
+                <div className="flex items-center justify-between border-b border-gray-200 bg-gray-100 px-4 py-2 dark:border-gray-700 dark:bg-gray-800">
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    Content ({selectedResponse.content.length.toLocaleString()} characters)
+                  </span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedResponse.content);
+                    }}
+                    className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  >
+                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+                <pre className="overflow-x-auto p-4 text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words font-mono">
+                  {selectedResponse.content}
+                </pre>
+              </div>
             </div>
           </div>
         </div>
