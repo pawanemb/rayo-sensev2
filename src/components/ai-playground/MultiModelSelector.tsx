@@ -33,7 +33,7 @@ export default function MultiModelSelector({
   
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [coords, setCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [coords, setCoords] = useState<{ top: number; left: number; maxHeight: number }>({ top: 0, left: 0, maxHeight: 600 });
 
   const filteredModels = AVAILABLE_MODELS.filter(model => {
     const matchesSearch = model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -77,9 +77,25 @@ export default function MultiModelSelector({
   const toggleOpen = () => {
     if (!isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const dropdownWidth = 520;
+      const margin = 16;
+
+      let left = rect.left;
+      
+      // Prevent overflowing right edge
+      if (left + dropdownWidth > viewportWidth - margin) {
+        left = Math.max(margin, viewportWidth - dropdownWidth - margin);
+      }
+
+      const top = rect.bottom + 8;
+      const availableHeight = viewportHeight - top - margin;
+
       setCoords({
-        top: rect.bottom + 8, // mt-2 equivalent
-        left: rect.left
+        top,
+        left,
+        maxHeight: availableHeight
       });
     }
     setIsOpen(!isOpen);
@@ -146,14 +162,16 @@ export default function MultiModelSelector({
           {/* Dropdown Content */}
           <div 
             ref={dropdownRef}
-            className="fixed w-[520px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-[9999] overflow-hidden"
+            className="fixed w-[520px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-[9999] overflow-hidden flex flex-col"
             style={{
               top: coords.top,
               left: coords.left,
+              maxWidth: 'calc(100vw - 32px)',
+              maxHeight: coords.maxHeight,
             }}
           >
             {/* Header */}
-            <div className="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+            <div className="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 shrink-0">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Select Multiple Models
@@ -168,7 +186,7 @@ export default function MultiModelSelector({
             </div>
             
             {/* Search */}
-            <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+            <div className="p-3 border-b border-gray-200 dark:border-gray-700 shrink-0">
               <div className="relative">
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -185,7 +203,7 @@ export default function MultiModelSelector({
             </div>
             
             {/* Interface Tabs */}
-            <div className="flex gap-1 p-2 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+            <div className="flex gap-1 p-2 border-b border-gray-200 dark:border-gray-700 overflow-x-auto shrink-0">
               {INTERFACE_GROUPS.map(group => (
                 <button
                   key={group.id}
@@ -202,7 +220,7 @@ export default function MultiModelSelector({
             </div>
             
             {/* Quick Actions */}
-            <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
               <button
                 onClick={handleSelectAll}
                 className="text-xs text-brand-500 hover:text-brand-600 font-medium"
@@ -219,7 +237,7 @@ export default function MultiModelSelector({
             </div>
             
             {/* Models List */}
-            <div className="max-h-64 overflow-y-auto custom-scrollbar">
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
               {filteredModels.length === 0 ? (
                 <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
                   No models found
@@ -283,7 +301,7 @@ export default function MultiModelSelector({
             </div>
             
             {/* Footer */}
-            <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+            <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 shrink-0">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   {selectedModels.length} of {AVAILABLE_MODELS.length} models selected
