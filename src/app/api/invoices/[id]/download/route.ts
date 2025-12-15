@@ -5,10 +5,10 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_RAYO_BACKEND_URL || 'https://backend
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json(
