@@ -92,6 +92,36 @@ export default function UserInvoices({ userId }: UserInvoicesProps) {
     fetchInvoices(page);
   };
 
+  const handleDownloadInvoice = async (invoiceId: string, invoiceNumber: string) => {
+    try {
+      const response = await fetch(`/api/invoices/${invoiceId}/download`);
+
+      if (!response.ok) {
+        throw new Error('Failed to download invoice');
+      }
+
+      // Create a blob from the response
+      const blob = await response.blob();
+
+      // Create a temporary URL for the blob
+      const url = window.URL.createObjectURL(blob);
+
+      // Create a temporary anchor element and trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${invoiceNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      alert('Failed to download invoice. Please try again.');
+    }
+  };
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="mb-6 flex items-center gap-3">
@@ -106,21 +136,23 @@ export default function UserInvoices({ userId }: UserInvoicesProps) {
       {isLoading ? (
         <div className="space-y-3">
           {/* Table Header Skeleton */}
-          <div className="grid grid-cols-5 gap-4 border-b border-gray-200 pb-3 dark:border-gray-800">
+          <div className="grid grid-cols-6 gap-4 border-b border-gray-200 pb-3 dark:border-gray-800">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-20" />
           </div>
           {/* Table Rows Skeleton */}
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="grid grid-cols-5 gap-4 border-b border-gray-100 py-3 dark:border-gray-800">
+            <div key={i} className="grid grid-cols-6 gap-4 border-b border-gray-100 py-3 dark:border-gray-800">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-6 w-16 rounded-full" />
               <Skeleton className="h-4 w-20" />
               <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-8 w-24 rounded-lg" />
             </div>
           ))}
         </div>
@@ -151,6 +183,9 @@ export default function UserInvoices({ userId }: UserInvoicesProps) {
                   </th>
                   <th className="pb-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
                     Due Date
+                  </th>
+                  <th className="pb-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -195,6 +230,28 @@ export default function UserInvoices({ userId }: UserInvoicesProps) {
                     </td>
                     <td className="py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
                       {formatDate(invoice.due_date)}
+                    </td>
+                    <td className="py-3">
+                      <button
+                        onClick={() => handleDownloadInvoice(invoice.id, invoice.invoice_number)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                        title="Download PDF"
+                      >
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        Download
+                      </button>
                     </td>
                   </tr>
                 ))}
