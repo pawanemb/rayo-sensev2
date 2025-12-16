@@ -3,6 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { supabaseMonitoring } from "@/lib/supabase/monitoring";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
+// Get scraper API configuration from environment
+const getScraperConfig = () => ({
+  url: process.env.SCRAPER_URL || 'https://s.rayo.work',
+  token: process.env.SCRAPER_TOKEN || 'rayo-scraper-pawan',
+});
+
 // Helper function to verify admin authentication using cookies
 const verifyAdminAuth = async () => {
   try {
@@ -227,12 +233,319 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ data: summary });
     }
 
+    // Backend API calls (proxied to scraper service)
+    else if (table === "task_status") {
+      // Get task status from backend
+      if (!taskId) {
+        return NextResponse.json(
+          { success: false, error: "task_id is required" },
+          { status: 400 }
+        );
+      }
+
+      const { url: scraperUrl, token: scraperToken } = getScraperConfig();
+      const response = await fetch(`${scraperUrl}/crawl/${taskId}/status`, {
+        headers: { 'Authorization': `Bearer ${scraperToken}` },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        return NextResponse.json(
+          { success: false, error: data.detail || 'Failed to fetch task status' },
+          { status: response.status }
+        );
+      }
+
+      return NextResponse.json({ success: true, data });
+    }
+
+    else if (table === "backend_pages") {
+      // Get pages from backend API
+      if (!taskId) {
+        return NextResponse.json(
+          { success: false, error: "task_id is required" },
+          { status: 400 }
+        );
+      }
+
+      const { url: scraperUrl, token: scraperToken } = getScraperConfig();
+      const response = await fetch(
+        `${scraperUrl}/crawl/${taskId}/pages?limit=${limit}&offset=${offset}`,
+        { headers: { 'Authorization': `Bearer ${scraperToken}` } }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        return NextResponse.json(
+          { success: false, error: data.detail || 'Failed to fetch pages' },
+          { status: response.status }
+        );
+      }
+
+      return NextResponse.json({ success: true, data });
+    }
+
+    else if (table === "backend_tasks") {
+      // Get tasks list from backend API
+      const { url: scraperUrl, token: scraperToken } = getScraperConfig();
+      const response = await fetch(
+        `${scraperUrl}/crawl/tasks?limit=${limit}`,
+        { headers: { 'Authorization': `Bearer ${scraperToken}` } }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        return NextResponse.json(
+          { success: false, error: data.detail || 'Failed to fetch tasks' },
+          { status: response.status }
+        );
+      }
+
+      return NextResponse.json({ success: true, data });
+    }
+
+    else if (table === "cache_stats") {
+      // Get cache statistics from backend
+      const { url: scraperUrl, token: scraperToken } = getScraperConfig();
+      const response = await fetch(
+        `${scraperUrl}/cache/stats`,
+        { headers: { 'Authorization': `Bearer ${scraperToken}` } }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        return NextResponse.json(
+          { success: false, error: data.detail || 'Failed to fetch cache stats' },
+          { status: response.status }
+        );
+      }
+
+      return NextResponse.json({ success: true, data });
+    }
+
     return NextResponse.json(
       { success: false, error: "Invalid table parameter" },
       { status: 400 }
     );
   } catch (error) {
     console.error("[CRAWL] Unexpected error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST handler for starting and canceling crawl tasks
+export async function POST(request: NextRequest) {
+  // Verify admin authentication
+  const auth = await verifyAdminAuth();
+
+  if (!auth) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized - Admin access required' },
+      { status: 401 }
+    );
+  }
+
+  try {
+    const body = await request.json();
+    const { action, task_id, seed_url, max_pages, use_proxy, respect_robots } = body;
+
+    const { url: scraperUrl, token: scraperToken } = getScraperConfig();
+
+    // Start a new crawl task
+    if (action === "start") {
+      if (!seed_url) {
+        return NextResponse.json(
+          { success: false, error: "seed_url is required" },
+          { status: 400 }
+        );
+      }
+
+      console.log("[CRAWL] Starting new crawl task:", seed_url);
+
+      const response = await fetch(`${scraperUrl}/crawl/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${scraperToken}`,
+        },
+        body: JSON.stringify({
+          seed_url,
+          max_pages: max_pages || 100,
+          use_proxy: use_proxy ?? true,
+          respect_robots: respect_robots ?? true,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("[CRAWL] Start crawl error:", {
+          status: response.status,
+          data
+        });
+        return NextResponse.json(
+          {
+            success: false,
+            error: data.detail || 'Failed to start crawl',
+            details: data
+          },
+          { status: response.status }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "Crawl task started",
+        data
+      });
+    }
+
+    // Cancel an existing crawl task
+    if (action === "cancel") {
+      if (!task_id) {
+        return NextResponse.json(
+          { success: false, error: "task_id is required" },
+          { status: 400 }
+        );
+      }
+
+      console.log("[CRAWL] Canceling crawl task:", task_id);
+
+      const response = await fetch(`${scraperUrl}/crawl/${task_id}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${scraperToken}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("[CRAWL] Cancel crawl error:", {
+          status: response.status,
+          data
+        });
+        return NextResponse.json(
+          {
+            success: false,
+            error: data.detail || 'Failed to cancel crawl',
+            details: data
+          },
+          { status: response.status }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "Crawl task canceled",
+        data
+      });
+    }
+
+    return NextResponse.json(
+      { success: false, error: "Invalid action. Use 'start' or 'cancel'" },
+      { status: 400 }
+    );
+
+  } catch (error) {
+    console.error("[CRAWL] POST error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE handler for cache operations
+export async function DELETE(request: NextRequest) {
+  // Verify admin authentication
+  const auth = await verifyAdminAuth();
+
+  if (!auth) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized - Admin access required' },
+      { status: 401 }
+    );
+  }
+
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const action = searchParams.get("action");
+    const url = searchParams.get("url");
+
+    const { url: scraperUrl, token: scraperToken } = getScraperConfig();
+
+    // Delete cache for specific URL
+    if (action === "cache_url") {
+      if (!url) {
+        return NextResponse.json(
+          { success: false, error: "url parameter is required" },
+          { status: 400 }
+        );
+      }
+
+      console.log("[CRAWL] Deleting cache for URL:", url);
+
+      const response = await fetch(
+        `${scraperUrl}/cache/url?url=${encodeURIComponent(url)}`,
+        {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${scraperToken}` },
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        return NextResponse.json(
+          { success: false, error: data.detail || 'Failed to delete cache' },
+          { status: response.status }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "Cache deleted for URL",
+        data
+      });
+    }
+
+    // Clear all cache
+    if (action === "cache_clear") {
+      console.log("[CRAWL] Clearing all cache");
+
+      const response = await fetch(
+        `${scraperUrl}/cache/clear`,
+        {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${scraperToken}` },
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        return NextResponse.json(
+          { success: false, error: data.detail || 'Failed to clear cache' },
+          { status: response.status }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "All cache cleared",
+        data
+      });
+    }
+
+    return NextResponse.json(
+      { success: false, error: "Invalid action. Use 'cache_url' or 'cache_clear'" },
+      { status: 400 }
+    );
+
+  } catch (error) {
+    console.error("[CRAWL] DELETE error:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

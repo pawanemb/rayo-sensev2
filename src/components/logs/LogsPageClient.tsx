@@ -19,12 +19,18 @@ import {
   getCrawlTasks,
   getCrawlPages,
   getCrawlSummary,
+  startCrawlTask,
+  cancelCrawlTask,
+  getCacheStats,
+  deleteCacheForUrl,
+  clearAllCache,
   DashboardSummaryData,
   ScrapeRequest,
   ErrorLog,
   CrawlTask,
   CrawlPage,
   CrawlSummary,
+  CacheStats,
 } from "@/lib/logs/logsService";
 import WebScraper from "@/components/developer/WebScraper";
 
@@ -66,8 +72,26 @@ export default function LogsPageClient() {
   const [crawlPagesTotal, setCrawlPagesTotal] = useState(0);
   const [crawlPagesTotalPages, setCrawlPagesTotalPages] = useState(0);
   const [showContentModal, setShowContentModal] = useState(false);
-  const [selectedContent, setSelectedContent] = useState<{ content: string; url: string; title: string } | null>(null);
+  const [selectedContent, setSelectedContent] = useState<{ markdown: string; html: string; url: string; title: string } | null>(null);
+  const [contentViewTab, setContentViewTab] = useState<'markdown' | 'html'>('markdown');
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+
+  // Start crawl modal states
+  const [showStartCrawlModal, setShowStartCrawlModal] = useState(false);
+  const [startCrawlUrl, setStartCrawlUrl] = useState('');
+  const [startCrawlMaxPages, setStartCrawlMaxPages] = useState(100);
+  const [startCrawlUseProxy, setStartCrawlUseProxy] = useState(true);
+  const [startCrawlRespectRobots, setStartCrawlRespectRobots] = useState(true);
+  const [startCrawlLoading, setStartCrawlLoading] = useState(false);
+  const [cancelingTaskId, setCancelingTaskId] = useState<string | null>(null);
+
+  // Cache management states
+  const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
+  const [cacheStatsLoading, setCacheStatsLoading] = useState(false);
+  const [showCacheSection, setShowCacheSection] = useState(false);
+  const [deleteCacheUrl, setDeleteCacheUrl] = useState('');
+  const [deletingCacheUrl, setDeletingCacheUrl] = useState(false);
+  const [clearingAllCache, setClearingAllCache] = useState(false);
 
   const limit = 10;
 
@@ -75,14 +99,20 @@ export default function LogsPageClient() {
   const fetchAllData = useCallback(async () => {
     setLoading(true);
     try {
-      const [summaryData, scrapeRequestsData, errorLogsData] = await Promise.all([
+      const [summaryData, scrapeRequestsData, errorLogsData, crawlTasksData, crawlSummaryData] = await Promise.all([
         getDashboardSummary(),
         getScrapeRequests({ page: 1, limit }),
         getErrorLogs({ page: 1, limit }),
+        getCrawlTasks({ page: 1, limit }),
+        getCrawlSummary(),
       ]);
 
       setSummary(summaryData);
       setScrapeRequests(scrapeRequestsData.data);
+      setCrawlTasks(crawlTasksData.data);
+      setCrawlTasksTotal(crawlTasksData.total);
+      setCrawlTasksTotalPages(crawlTasksData.totalPages);
+      setCrawlSummary(crawlSummaryData);
       setScrapeRequestsTotal(scrapeRequestsData.total);
       setScrapeRequestsTotalPages(scrapeRequestsData.totalPages);
       setErrorLogs(errorLogsData.data);
@@ -216,8 +246,9 @@ export default function LogsPageClient() {
     fetchCrawlPages(task.id, 1);
   };
 
-  const handleViewContent = (content: string, url: string, title: string) => {
-    setSelectedContent({ content, url, title });
+  const handleViewContent = (markdown: string, html: string, url: string, title: string) => {
+    setSelectedContent({ markdown, html, url, title });
+    setContentViewTab(markdown ? 'markdown' : 'html');
     setShowContentModal(true);
   };
 
@@ -251,12 +282,134 @@ export default function LogsPageClient() {
             Failed
           </span>
         );
+      case "canceled":
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-400">
+            <FaTimesCircle className="w-2.5 h-2.5" />
+            Canceled
+          </span>
+        );
       default:
         return (
           <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-400">
             {status}
           </span>
         );
+    }
+  };
+
+  // Handle starting a new crawl task
+  const handleStartCrawl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!startCrawlUrl.trim()) return;
+
+    setStartCrawlLoading(true);
+    try {
+      const result = await startCrawlTask({
+        seed_url: startCrawlUrl.trim(),
+        max_pages: startCrawlMaxPages,
+        use_proxy: startCrawlUseProxy,
+        respect_robots: startCrawlRespectRobots,
+      });
+
+      if (result.success) {
+        setShowStartCrawlModal(false);
+        setStartCrawlUrl('');
+        setStartCrawlMaxPages(100);
+        // Refresh the crawl tasks list
+        fetchCrawlTasks(1);
+      } else {
+        console.error('Failed to start crawl:', result.error);
+        alert(result.error || 'Failed to start crawl task');
+      }
+    } catch (error) {
+      console.error('Error starting crawl:', error);
+      alert('Failed to start crawl task');
+    } finally {
+      setStartCrawlLoading(false);
+    }
+  };
+
+  // Handle canceling a crawl task
+  const handleCancelCrawl = async (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Are you sure you want to cancel this crawl task?')) return;
+
+    setCancelingTaskId(taskId);
+    try {
+      const result = await cancelCrawlTask(taskId);
+
+      if (result.success) {
+        // Refresh the crawl tasks list
+        fetchCrawlTasks(crawlTasksPage);
+      } else {
+        console.error('Failed to cancel crawl:', result.error);
+        alert(result.error || 'Failed to cancel crawl task');
+      }
+    } catch (error) {
+      console.error('Error canceling crawl:', error);
+      alert('Failed to cancel crawl task');
+    } finally {
+      setCancelingTaskId(null);
+    }
+  };
+
+  // Fetch cache stats
+  const fetchCacheStats = async () => {
+    setCacheStatsLoading(true);
+    try {
+      const result = await getCacheStats();
+      if (result.success && result.data) {
+        setCacheStats(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching cache stats:', error);
+    } finally {
+      setCacheStatsLoading(false);
+    }
+  };
+
+  // Handle delete cache for URL
+  const handleDeleteCacheUrl = async () => {
+    if (!deleteCacheUrl.trim()) return;
+    if (!confirm(`Are you sure you want to delete cache for: ${deleteCacheUrl}?`)) return;
+
+    setDeletingCacheUrl(true);
+    try {
+      const result = await deleteCacheForUrl(deleteCacheUrl.trim());
+      if (result.success) {
+        setDeleteCacheUrl('');
+        fetchCacheStats();
+        alert('Cache deleted successfully');
+      } else {
+        alert(result.error || 'Failed to delete cache');
+      }
+    } catch (error) {
+      console.error('Error deleting cache:', error);
+      alert('Failed to delete cache');
+    } finally {
+      setDeletingCacheUrl(false);
+    }
+  };
+
+  // Handle clear all cache
+  const handleClearAllCache = async () => {
+    if (!confirm('Are you sure you want to clear ALL cache? This cannot be undone.')) return;
+
+    setClearingAllCache(true);
+    try {
+      const result = await clearAllCache();
+      if (result.success) {
+        fetchCacheStats();
+        alert('All cache cleared successfully');
+      } else {
+        alert(result.error || 'Failed to clear cache');
+      }
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+      alert('Failed to clear cache');
+    } finally {
+      setClearingAllCache(false);
     }
   };
 
@@ -425,6 +578,14 @@ export default function LogsPageClient() {
           >
             <FaPlus size={12} />
             Manual Scrape
+          </button>
+
+          <button
+            onClick={() => setShowStartCrawlModal(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-teal-700"
+          >
+            <FaSpider size={12} />
+            Start Crawl
           </button>
 
           <button
@@ -1054,6 +1215,126 @@ export default function LogsPageClient() {
                   </div>
                 )}
 
+                {/* Cache Management Section */}
+                <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                  <button
+                    onClick={() => {
+                      setShowCacheSection(!showCacheSection);
+                      if (!showCacheSection && !cacheStats) {
+                        fetchCacheStats();
+                      }
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-2 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FaDatabase className="w-4 h-4 text-purple-500" />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Cache Management</span>
+                    </div>
+                    <svg
+                      className={`w-4 h-4 text-gray-500 transition-transform ${showCacheSection ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {showCacheSection && (
+                    <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4">
+                      {/* Cache Stats */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                        <div className="rounded-lg border border-purple-200 bg-purple-50 p-2 dark:border-purple-800 dark:bg-purple-900/20">
+                          <p className="text-[10px] font-medium text-purple-600 dark:text-purple-400">Status</p>
+                          <p className={`text-lg font-bold ${cacheStats?.enabled ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {cacheStatsLoading ? '...' : (cacheStats?.enabled ? 'Enabled' : 'Disabled')}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-purple-200 bg-purple-50 p-2 dark:border-purple-800 dark:bg-purple-900/20">
+                          <p className="text-[10px] font-medium text-purple-600 dark:text-purple-400">Cached Keys</p>
+                          <p className="text-lg font-bold text-purple-700 dark:text-purple-300">
+                            {cacheStatsLoading ? '...' : (cacheStats?.keys?.toLocaleString() || '0')}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-purple-200 bg-purple-50 p-2 dark:border-purple-800 dark:bg-purple-900/20">
+                          <p className="text-[10px] font-medium text-purple-600 dark:text-purple-400">Memory Used</p>
+                          <p className="text-lg font-bold text-purple-700 dark:text-purple-300">
+                            {cacheStatsLoading ? '...' : (cacheStats?.memory_used || '0')}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-green-200 bg-green-50 p-2 dark:border-green-800 dark:bg-green-900/20">
+                          <p className="text-[10px] font-medium text-green-600 dark:text-green-400">Cache Hits</p>
+                          <p className="text-lg font-bold text-green-700 dark:text-green-300">
+                            {cacheStatsLoading ? '...' : (cacheStats?.hits?.toLocaleString() || '0')}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-orange-200 bg-orange-50 p-2 dark:border-orange-800 dark:bg-orange-900/20">
+                          <p className="text-[10px] font-medium text-orange-600 dark:text-orange-400">Cache Misses</p>
+                          <p className="text-lg font-bold text-orange-700 dark:text-orange-300">
+                            {cacheStatsLoading ? '...' : (cacheStats?.misses?.toLocaleString() || '0')}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-900/20">
+                          <p className="text-[10px] font-medium text-blue-600 dark:text-blue-400">Hit Rate</p>
+                          <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                            {cacheStatsLoading ? '...' : `${(cacheStats?.hit_rate || 0).toFixed(1)}%`}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Cache Actions */}
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        {/* Delete cache for URL */}
+                        <div className="flex-1 flex gap-2">
+                          <input
+                            type="url"
+                            value={deleteCacheUrl}
+                            onChange={(e) => setDeleteCacheUrl(e.target.value)}
+                            placeholder="Enter URL to delete from cache..."
+                            className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          />
+                          <button
+                            onClick={handleDeleteCacheUrl}
+                            disabled={deletingCacheUrl || !deleteCacheUrl.trim()}
+                            className="px-3 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 rounded-lg transition-colors flex items-center gap-1"
+                          >
+                            {deletingCacheUrl ? (
+                              <FaSync className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <FaTimesCircle className="w-3 h-3" />
+                            )}
+                            Delete
+                          </button>
+                        </div>
+
+                        {/* Refresh stats & Clear all */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={fetchCacheStats}
+                            disabled={cacheStatsLoading}
+                            className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-1"
+                          >
+                            <FaSync className={`w-3 h-3 ${cacheStatsLoading ? 'animate-spin' : ''}`} />
+                            Refresh
+                          </button>
+                          <button
+                            onClick={handleClearAllCache}
+                            disabled={clearingAllCache}
+                            className="px-3 py-2 text-sm font-medium text-white bg-error-600 hover:bg-error-700 disabled:bg-gray-400 rounded-lg transition-colors flex items-center gap-1"
+                          >
+                            {clearingAllCache ? (
+                              <FaSync className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <FaTimesCircle className="w-3 h-3" />
+                            )}
+                            Clear All
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Auto-refresh toggle */}
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -1099,6 +1380,7 @@ export default function LogsPageClient() {
                         <TableCell className="px-2 py-1.5 min-w-[200px]">Domain / Seed URL</TableCell>
                         <TableCell className="px-2 py-1.5 w-[80px]">Status</TableCell>
                         <TableCell className="px-2 py-1.5 w-[100px]">Progress</TableCell>
+                        <TableCell className="px-2 py-1.5 w-[80px]">Duration</TableCell>
                         <TableCell className="px-2 py-1.5 w-[80px]">URLs</TableCell>
                         <TableCell className="px-2 py-1.5 w-[60px]">Proxy</TableCell>
                         <TableCell className="px-2 py-1.5 min-w-[140px]">User</TableCell>
@@ -1107,7 +1389,7 @@ export default function LogsPageClient() {
                       </TableRow>
                     </TableHeader>
                     {crawlTasksLoading ? (
-                      <TableSkeleton rows={10} columns={9} variant="logs" />
+                      <TableSkeleton rows={10} columns={10} variant="logs" />
                     ) : (
                       <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
                         {crawlTasks.length === 0 ? (
@@ -1169,6 +1451,15 @@ export default function LogsPageClient() {
                                   </div>
                                   <span className="text-[9px] text-gray-400">max: {task.max_pages}</span>
                                 </div>
+                              </TableCell>
+                              <TableCell className="px-2 py-1.5">
+                                <span className="text-[11px] text-gray-700 dark:text-gray-300">
+                                  {task.duration_seconds != null ? (
+                                    task.duration_seconds >= 60
+                                      ? `${Math.floor(task.duration_seconds / 60)}m ${Math.round(task.duration_seconds % 60)}s`
+                                      : `${task.duration_seconds.toFixed(1)}s`
+                                  ) : '—'}
+                                </span>
                               </TableCell>
                               <TableCell className="px-2 py-1.5">
                                 <div className="flex flex-col gap-0.5 text-[10px]">
@@ -1246,16 +1537,32 @@ export default function LogsPageClient() {
                                 )}
                               </TableCell>
                               <TableCell className="px-2 py-1.5">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleTaskSelect(task);
-                                  }}
-                                  className="inline-flex items-center gap-1 rounded-md bg-brand-100 px-2 py-1 text-[10px] font-medium text-brand-700 transition-colors hover:bg-brand-200 dark:bg-brand-900/30 dark:text-brand-400 dark:hover:bg-brand-900/50"
-                                >
-                                  <FaGlobe className="w-2.5 h-2.5" />
-                                  Pages
-                                </button>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleTaskSelect(task);
+                                    }}
+                                    className="inline-flex items-center gap-1 rounded-md bg-brand-100 px-2 py-1 text-[10px] font-medium text-brand-700 transition-colors hover:bg-brand-200 dark:bg-brand-900/30 dark:text-brand-400 dark:hover:bg-brand-900/50"
+                                  >
+                                    <FaGlobe className="w-2.5 h-2.5" />
+                                    Pages
+                                  </button>
+                                  {(task.status === 'running' || task.status === 'pending') && (
+                                    <button
+                                      onClick={(e) => handleCancelCrawl(task.id, e)}
+                                      disabled={cancelingTaskId === task.id}
+                                      className="inline-flex items-center gap-1 rounded-md bg-error-100 px-2 py-1 text-[10px] font-medium text-error-700 transition-colors hover:bg-error-200 dark:bg-error-900/30 dark:text-error-400 dark:hover:bg-error-900/50 disabled:opacity-50"
+                                    >
+                                      {cancelingTaskId === task.id ? (
+                                        <FaSync className="w-2.5 h-2.5 animate-spin" />
+                                      ) : (
+                                        <FaTimesCircle className="w-2.5 h-2.5" />
+                                      )}
+                                      Cancel
+                                    </button>
+                                  )}
+                                </div>
                               </TableCell>
                             </TableRow>
                           ))
@@ -1383,9 +1690,9 @@ export default function LogsPageClient() {
                                   )}
                                 </TableCell>
                                 <TableCell className="px-2 py-1.5">
-                                  {page.markdown_content ? (
+                                  {(page.markdown_content || page.html_content) ? (
                                     <button
-                                      onClick={() => handleViewContent(page.markdown_content || '', page.url, page.title || '')}
+                                      onClick={() => handleViewContent(page.markdown_content || '', page.html_content || '', page.url, page.title || '')}
                                       className="inline-flex items-center gap-1 rounded-md bg-indigo-100 px-2 py-1 text-[10px] font-medium text-indigo-700 transition-colors hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400"
                                     >
                                       <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1521,16 +1828,43 @@ export default function LogsPageClient() {
               </button>
             </div>
 
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 dark:border-gray-700 px-6">
+              <button
+                onClick={() => setContentViewTab('markdown')}
+                disabled={!selectedContent.markdown}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  contentViewTab === 'markdown'
+                    ? 'border-teal-500 text-teal-600 dark:text-teal-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                } ${!selectedContent.markdown ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                Markdown {selectedContent.markdown && `(${selectedContent.markdown.length.toLocaleString()})`}
+              </button>
+              <button
+                onClick={() => setContentViewTab('html')}
+                disabled={!selectedContent.html}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  contentViewTab === 'html'
+                    ? 'border-teal-500 text-teal-600 dark:text-teal-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                } ${!selectedContent.html ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                HTML {selectedContent.html && `(${selectedContent.html.length.toLocaleString()})`}
+              </button>
+            </div>
+
             {/* Modal Content */}
-            <div className="overflow-y-auto max-h-[calc(90vh-100px)] p-6">
+            <div className="overflow-y-auto max-h-[calc(90vh-160px)] p-6">
               <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
                 <div className="flex items-center justify-between border-b border-gray-200 bg-gray-100 px-4 py-2 dark:border-gray-700 dark:bg-gray-800">
                   <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    Markdown Content ({selectedContent.content.length.toLocaleString()} characters)
+                    {contentViewTab === 'markdown' ? 'Markdown' : 'HTML'} Content
                   </span>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(selectedContent.content);
+                      const content = contentViewTab === 'markdown' ? selectedContent.markdown : selectedContent.html;
+                      navigator.clipboard.writeText(content);
                     }}
                     className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                   >
@@ -1540,9 +1874,15 @@ export default function LogsPageClient() {
                     Copy
                   </button>
                 </div>
-                <pre className="overflow-x-auto p-4 text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words font-mono">
-                  {selectedContent.content}
-                </pre>
+                {contentViewTab === 'markdown' ? (
+                  <pre className="overflow-x-auto p-4 text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words font-mono">
+                    {selectedContent.markdown || 'No markdown content available'}
+                  </pre>
+                ) : (
+                  <pre className="overflow-x-auto p-4 text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words font-mono">
+                    {selectedContent.html || 'No HTML content available'}
+                  </pre>
+                )}
               </div>
             </div>
           </div>
@@ -1580,6 +1920,137 @@ export default function LogsPageClient() {
             <div className="p-6">
               <WebScraper />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Start Crawl Modal */}
+      {showStartCrawlModal && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => setShowStartCrawlModal(false)}
+        >
+          <div
+            className="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900 rounded-t-xl">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 shadow-md">
+                  <FaSpider className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Start New Crawl</h2>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">Crawl a website and extract all pages</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowStartCrawlModal(false)}
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <form onSubmit={handleStartCrawl} className="p-6 space-y-4">
+              {/* Seed URL */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Seed URL *
+                </label>
+                <input
+                  type="url"
+                  value={startCrawlUrl}
+                  onChange={(e) => setStartCrawlUrl(e.target.value)}
+                  placeholder="https://example.com"
+                  required
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                />
+                <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">
+                  The starting URL for the crawler
+                </p>
+              </div>
+
+              {/* Max Pages */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Max Pages
+                </label>
+                <input
+                  type="number"
+                  value={startCrawlMaxPages}
+                  onChange={(e) => setStartCrawlMaxPages(parseInt(e.target.value) || 100)}
+                  min={1}
+                  max={10000}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                />
+                <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">
+                  Maximum number of pages to crawl (1-10000)
+                </p>
+              </div>
+
+              {/* Options Row */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Use Proxy */}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setStartCrawlUseProxy(!startCrawlUseProxy)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                      startCrawlUseProxy ? 'bg-teal-500' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                        startCrawlUseProxy ? 'translate-x-5' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Use Proxy</span>
+                </div>
+
+                {/* Respect Robots */}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setStartCrawlRespectRobots(!startCrawlRespectRobots)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                      startCrawlRespectRobots ? 'bg-teal-500' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                        startCrawlRespectRobots ? 'translate-x-5' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Respect robots.txt</span>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={startCrawlLoading || !startCrawlUrl.trim()}
+                className="w-full flex items-center justify-center px-6 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400 text-white font-medium transition-colors text-sm"
+              >
+                {startCrawlLoading ? (
+                  <>
+                    <FaSync className="animate-spin mr-2 h-4 w-4" />
+                    Starting Crawl...
+                  </>
+                ) : (
+                  <>
+                    <FaSpider className="mr-2 h-4 w-4" />
+                    Start Crawl
+                  </>
+                )}
+              </button>
+            </form>
           </div>
         </div>
       )}
