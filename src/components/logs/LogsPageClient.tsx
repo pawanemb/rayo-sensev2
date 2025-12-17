@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
-import { FaSync, FaFileExport, FaCheckCircle, FaTimesCircle, FaGlobe, FaClock, FaDatabase, FaPlus } from "react-icons/fa";
+import { FaSync, FaFileExport, FaCheckCircle, FaTimesCircle, FaGlobe, FaClock, FaDatabase, FaPlus, FaSpider, FaLink, FaHourglassHalf, FaPlay } from "react-icons/fa";
 import { generateAvatar } from "@/utils/avatar";
 import {
   Table,
@@ -16,13 +16,25 @@ import {
   getDashboardSummary,
   getScrapeRequests,
   getErrorLogs,
+  getCrawlTasks,
+  getCrawlPages,
+  getCrawlSummary,
+  startCrawlTask,
+  cancelCrawlTask,
+  getCacheStats,
+  deleteCacheForUrl,
+  clearAllCache,
   DashboardSummaryData,
   ScrapeRequest,
   ErrorLog,
+  CrawlTask,
+  CrawlPage,
+  CrawlSummary,
+  CacheStats,
 } from "@/lib/logs/logsService";
 import WebScraper from "@/components/developer/WebScraper";
 
-type TabType = "scrape_requests" | "error_logs";
+type TabType = "scrape_requests" | "error_logs" | "crawl_tasks";
 
 export default function LogsPageClient() {
   const [loading, setLoading] = useState(true);
@@ -43,6 +55,43 @@ export default function LogsPageClient() {
   const [errorLogsTotal, setErrorLogsTotal] = useState(0);
   const [errorLogsTotalPages, setErrorLogsTotalPages] = useState(0);
   const [showScrapeModal, setShowScrapeModal] = useState(false);
+  const [showResponseModal, setShowResponseModal] = useState(false);
+  const [selectedResponse, setSelectedResponse] = useState<{ content: string; url: string } | null>(null);
+
+  // Crawl tasks states
+  const [crawlTasks, setCrawlTasks] = useState<CrawlTask[]>([]);
+  const [crawlTasksLoading, setCrawlTasksLoading] = useState(false);
+  const [crawlTasksPage, setCrawlTasksPage] = useState(1);
+  const [crawlTasksTotal, setCrawlTasksTotal] = useState(0);
+  const [crawlTasksTotalPages, setCrawlTasksTotalPages] = useState(0);
+  const [crawlSummary, setCrawlSummary] = useState<CrawlSummary | null>(null);
+  const [selectedTask, setSelectedTask] = useState<CrawlTask | null>(null);
+  const [crawlPages, setCrawlPages] = useState<CrawlPage[]>([]);
+  const [crawlPagesLoading, setCrawlPagesLoading] = useState(false);
+  const [crawlPagesPage, setCrawlPagesPage] = useState(1);
+  const [crawlPagesTotal, setCrawlPagesTotal] = useState(0);
+  const [crawlPagesTotalPages, setCrawlPagesTotalPages] = useState(0);
+  const [showContentModal, setShowContentModal] = useState(false);
+  const [selectedContent, setSelectedContent] = useState<{ markdown: string; html: string; url: string; title: string } | null>(null);
+  const [contentViewTab, setContentViewTab] = useState<'markdown' | 'html'>('markdown');
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+
+  // Start crawl modal states
+  const [showStartCrawlModal, setShowStartCrawlModal] = useState(false);
+  const [startCrawlUrl, setStartCrawlUrl] = useState('');
+  const [startCrawlMaxPages, setStartCrawlMaxPages] = useState(100);
+  const [startCrawlUseProxy, setStartCrawlUseProxy] = useState(true);
+  const [startCrawlRespectRobots, setStartCrawlRespectRobots] = useState(true);
+  const [startCrawlLoading, setStartCrawlLoading] = useState(false);
+  const [cancelingTaskId, setCancelingTaskId] = useState<string | null>(null);
+
+  // Cache management states
+  const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
+  const [cacheStatsLoading, setCacheStatsLoading] = useState(false);
+  const [showCacheSection, setShowCacheSection] = useState(false);
+  const [deleteCacheUrl, setDeleteCacheUrl] = useState('');
+  const [deletingCacheUrl, setDeletingCacheUrl] = useState(false);
+  const [clearingAllCache, setClearingAllCache] = useState(false);
 
   const limit = 10;
 
@@ -50,14 +99,20 @@ export default function LogsPageClient() {
   const fetchAllData = useCallback(async () => {
     setLoading(true);
     try {
-      const [summaryData, scrapeRequestsData, errorLogsData] = await Promise.all([
+      const [summaryData, scrapeRequestsData, errorLogsData, crawlTasksData, crawlSummaryData] = await Promise.all([
         getDashboardSummary(),
         getScrapeRequests({ page: 1, limit }),
         getErrorLogs({ page: 1, limit }),
+        getCrawlTasks({ page: 1, limit }),
+        getCrawlSummary(),
       ]);
 
       setSummary(summaryData);
       setScrapeRequests(scrapeRequestsData.data);
+      setCrawlTasks(crawlTasksData.data);
+      setCrawlTasksTotal(crawlTasksData.total);
+      setCrawlTasksTotalPages(crawlTasksData.totalPages);
+      setCrawlSummary(crawlSummaryData);
       setScrapeRequestsTotal(scrapeRequestsData.total);
       setScrapeRequestsTotalPages(scrapeRequestsData.totalPages);
       setErrorLogs(errorLogsData.data);
@@ -100,9 +155,64 @@ export default function LogsPageClient() {
     }
   }, []);
 
+  // Fetch crawl tasks
+  const fetchCrawlTasks = useCallback(async (page: number, silent = false) => {
+    if (!silent) setCrawlTasksLoading(true);
+    try {
+      const [tasksData, summaryData] = await Promise.all([
+        getCrawlTasks({ page, limit }),
+        getCrawlSummary()
+      ]);
+      setCrawlTasks(tasksData.data);
+      setCrawlTasksTotal(tasksData.total);
+      setCrawlTasksTotalPages(tasksData.totalPages);
+      setCrawlSummary(summaryData);
+    } catch (error) {
+      console.error("Error fetching crawl tasks:", error);
+    } finally {
+      if (!silent) setCrawlTasksLoading(false);
+    }
+  }, []);
+
+  // Fetch crawl pages for a specific task
+  const fetchCrawlPages = useCallback(async (taskId: string, page: number, silent = false) => {
+    if (!silent) setCrawlPagesLoading(true);
+    try {
+      const data = await getCrawlPages({ page, limit, taskId });
+      setCrawlPages(data.data);
+      setCrawlPagesTotal(data.total);
+      setCrawlPagesTotalPages(data.totalPages);
+    } catch (error) {
+      console.error("Error fetching crawl pages:", error);
+    } finally {
+      if (!silent) setCrawlPagesLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchAllData();
   }, [fetchAllData]);
+
+  // Auto-refresh for crawl tasks every 5 seconds
+  useEffect(() => {
+    if (activeTab !== "crawl_tasks" || !autoRefreshEnabled) return;
+
+    const interval = setInterval(() => {
+      fetchCrawlTasks(crawlTasksPage, true);
+      if (selectedTask) {
+        fetchCrawlPages(selectedTask.id, crawlPagesPage, true);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [activeTab, autoRefreshEnabled, crawlTasksPage, crawlPagesPage, selectedTask, fetchCrawlTasks, fetchCrawlPages]);
+
+  // Fetch crawl data when switching to crawl tab
+  useEffect(() => {
+    if (activeTab === "crawl_tasks" && crawlTasks.length === 0) {
+      fetchCrawlTasks(1);
+    }
+  }, [activeTab, crawlTasks.length, fetchCrawlTasks]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -114,9 +224,192 @@ export default function LogsPageClient() {
     if (activeTab === "scrape_requests") {
       setScrapeRequestsPage(page);
       fetchScrapeRequests(page);
-    } else {
+    } else if (activeTab === "error_logs") {
       setErrorLogsPage(page);
       fetchErrorLogs(page);
+    } else if (activeTab === "crawl_tasks") {
+      setCrawlTasksPage(page);
+      fetchCrawlTasks(page);
+    }
+  };
+
+  const handleCrawlPagesPageChange = (page: number) => {
+    if (selectedTask) {
+      setCrawlPagesPage(page);
+      fetchCrawlPages(selectedTask.id, page);
+    }
+  };
+
+  const handleTaskSelect = (task: CrawlTask) => {
+    setSelectedTask(task);
+    setCrawlPagesPage(1);
+    fetchCrawlPages(task.id, 1);
+  };
+
+  const handleViewContent = (markdown: string, html: string, url: string, title: string) => {
+    setSelectedContent({ markdown, html, url, title });
+    setContentViewTab(markdown ? 'markdown' : 'html');
+    setShowContentModal(true);
+  };
+
+  const getCrawlStatusBadge = (status: string) => {
+    switch (status) {
+      case "pending":
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-[10px] font-medium text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+            <FaHourglassHalf className="w-2.5 h-2.5" />
+            Pending
+          </span>
+        );
+      case "running":
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 animate-pulse">
+            <FaPlay className="w-2.5 h-2.5" />
+            Running
+          </span>
+        );
+      case "completed":
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-success-100 px-2 py-0.5 text-[10px] font-medium text-success-700 dark:bg-success-900/30 dark:text-success-400">
+            <FaCheckCircle className="w-2.5 h-2.5" />
+            Completed
+          </span>
+        );
+      case "failed":
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-error-100 px-2 py-0.5 text-[10px] font-medium text-error-700 dark:bg-error-900/30 dark:text-error-400">
+            <FaTimesCircle className="w-2.5 h-2.5" />
+            Failed
+          </span>
+        );
+      case "canceled":
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-400">
+            <FaTimesCircle className="w-2.5 h-2.5" />
+            Canceled
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-400">
+            {status}
+          </span>
+        );
+    }
+  };
+
+  // Handle starting a new crawl task
+  const handleStartCrawl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!startCrawlUrl.trim()) return;
+
+    setStartCrawlLoading(true);
+    try {
+      const result = await startCrawlTask({
+        seed_url: startCrawlUrl.trim(),
+        max_pages: startCrawlMaxPages,
+        use_proxy: startCrawlUseProxy,
+        respect_robots: startCrawlRespectRobots,
+      });
+
+      if (result.success) {
+        setShowStartCrawlModal(false);
+        setStartCrawlUrl('');
+        setStartCrawlMaxPages(100);
+        // Refresh the crawl tasks list
+        fetchCrawlTasks(1);
+      } else {
+        console.error('Failed to start crawl:', result.error);
+        alert(result.error || 'Failed to start crawl task');
+      }
+    } catch (error) {
+      console.error('Error starting crawl:', error);
+      alert('Failed to start crawl task');
+    } finally {
+      setStartCrawlLoading(false);
+    }
+  };
+
+  // Handle canceling a crawl task
+  const handleCancelCrawl = async (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Are you sure you want to cancel this crawl task?')) return;
+
+    setCancelingTaskId(taskId);
+    try {
+      const result = await cancelCrawlTask(taskId);
+
+      if (result.success) {
+        // Refresh the crawl tasks list
+        fetchCrawlTasks(crawlTasksPage);
+      } else {
+        console.error('Failed to cancel crawl:', result.error);
+        alert(result.error || 'Failed to cancel crawl task');
+      }
+    } catch (error) {
+      console.error('Error canceling crawl:', error);
+      alert('Failed to cancel crawl task');
+    } finally {
+      setCancelingTaskId(null);
+    }
+  };
+
+  // Fetch cache stats
+  const fetchCacheStats = async () => {
+    setCacheStatsLoading(true);
+    try {
+      const result = await getCacheStats();
+      if (result.success && result.data) {
+        setCacheStats(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching cache stats:', error);
+    } finally {
+      setCacheStatsLoading(false);
+    }
+  };
+
+  // Handle delete cache for URL
+  const handleDeleteCacheUrl = async () => {
+    if (!deleteCacheUrl.trim()) return;
+    if (!confirm(`Are you sure you want to delete cache for: ${deleteCacheUrl}?`)) return;
+
+    setDeletingCacheUrl(true);
+    try {
+      const result = await deleteCacheForUrl(deleteCacheUrl.trim());
+      if (result.success) {
+        setDeleteCacheUrl('');
+        fetchCacheStats();
+        alert('Cache deleted successfully');
+      } else {
+        alert(result.error || 'Failed to delete cache');
+      }
+    } catch (error) {
+      console.error('Error deleting cache:', error);
+      alert('Failed to delete cache');
+    } finally {
+      setDeletingCacheUrl(false);
+    }
+  };
+
+  // Handle clear all cache
+  const handleClearAllCache = async () => {
+    if (!confirm('Are you sure you want to clear ALL cache? This cannot be undone.')) return;
+
+    setClearingAllCache(true);
+    try {
+      const result = await clearAllCache();
+      if (result.success) {
+        fetchCacheStats();
+        alert('All cache cleared successfully');
+      } else {
+        alert(result.error || 'Failed to clear cache');
+      }
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+      alert('Failed to clear cache');
+    } finally {
+      setClearingAllCache(false);
     }
   };
 
@@ -188,10 +481,15 @@ export default function LogsPageClient() {
     );
   };
 
-  const currentPage = activeTab === "scrape_requests" ? scrapeRequestsPage : errorLogsPage;
-  const totalPages = activeTab === "scrape_requests" ? scrapeRequestsTotalPages : errorLogsTotalPages;
-  const totalItems = activeTab === "scrape_requests" ? scrapeRequestsTotal : errorLogsTotal;
-  const currentData = activeTab === "scrape_requests" ? scrapeRequests : errorLogs;
+  const handleViewResponse = (content: string, url: string) => {
+    setSelectedResponse({ content, url });
+    setShowResponseModal(true);
+  };
+
+  const currentPage = activeTab === "scrape_requests" ? scrapeRequestsPage : activeTab === "error_logs" ? errorLogsPage : crawlTasksPage;
+  const totalPages = activeTab === "scrape_requests" ? scrapeRequestsTotalPages : activeTab === "error_logs" ? errorLogsTotalPages : crawlTasksTotalPages;
+  const totalItems = activeTab === "scrape_requests" ? scrapeRequestsTotal : activeTab === "error_logs" ? errorLogsTotal : crawlTasksTotal;
+  const currentData = activeTab === "scrape_requests" ? scrapeRequests : activeTab === "error_logs" ? errorLogs : crawlTasks;
 
   const pageNumbers = (() => {
     const current = currentPage;
@@ -280,6 +578,14 @@ export default function LogsPageClient() {
           >
             <FaPlus size={12} />
             Manual Scrape
+          </button>
+
+          <button
+            onClick={() => setShowStartCrawlModal(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-teal-700"
+          >
+            <FaSpider size={12} />
+            Start Crawl
           </button>
 
           <button
@@ -410,6 +716,22 @@ export default function LogsPageClient() {
         >
           Error Logs ({errorLogsTotal})
         </button>
+        <button
+          onClick={() => setActiveTab("crawl_tasks")}
+          className={`px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5 ${
+            activeTab === "crawl_tasks"
+              ? "border-b-2 border-brand-500 text-brand-600 dark:text-brand-400"
+              : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+          }`}
+        >
+          <FaSpider className="w-3 h-3" />
+          Crawl Tasks ({crawlTasksTotal})
+          {crawlSummary && crawlSummary.running_tasks > 0 && (
+            <span className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[9px] font-bold text-white animate-pulse">
+              {crawlSummary.running_tasks}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Table */}
@@ -425,6 +747,7 @@ export default function LogsPageClient() {
                     <TableCell className="px-2 py-1.5 w-[110px]">Method/Status</TableCell>
                     <TableCell className="px-2 py-1.5 w-[90px]">Duration/Cache</TableCell>
                     <TableCell className="px-2 py-1.5 w-[50px]">Proxy</TableCell>
+                    <TableCell className="px-2 py-1.5 w-[70px]">Response</TableCell>
                     <TableCell className="px-2 py-1.5 min-w-[160px]">User</TableCell>
                     <TableCell className="px-2 py-1.5 min-w-[160px]">Project</TableCell>
                     <TableCell className="px-2 py-1.5 min-w-[140px]">Blog</TableCell>
@@ -432,12 +755,12 @@ export default function LogsPageClient() {
                   </TableRow>
                 </TableHeader>
                 {loading || scrapeRequestsLoading ? (
-                  <TableSkeleton rows={10} columns={9} variant="logs" />
+                  <TableSkeleton rows={10} columns={10} variant="logs" />
                 ) : (
                   <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
                     {scrapeRequests.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="px-5 py-8 text-center text-xs text-gray-500 dark:text-gray-400">
+                        <TableCell colSpan={10} className="px-5 py-8 text-center text-xs text-gray-500 dark:text-gray-400">
                           No scrape requests found.
                         </TableCell>
                       </TableRow>
@@ -505,6 +828,22 @@ export default function LogsPageClient() {
                                   </svg>
                                 </span>
                               )
+                            ) : (
+                              <span className="text-[11px] text-gray-400 dark:text-gray-500">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="px-2 py-1.5">
+                            {request.response_content && request.response_content.trim() ? (
+                              <button
+                                onClick={() => handleViewResponse(request.response_content, request.url)}
+                                className="inline-flex items-center gap-1 rounded-md bg-indigo-100 px-2 py-1 text-[10px] font-medium text-indigo-700 transition-colors hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
+                              >
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                View
+                              </button>
                             ) : (
                               <span className="text-[11px] text-gray-400 dark:text-gray-500">—</span>
                             )}
@@ -634,7 +973,7 @@ export default function LogsPageClient() {
                   </TableBody>
                 )}
               </Table>
-            ) : (
+            ) : activeTab === "error_logs" ? (
               <Table>
                 <TableHeader className="border-b border-gray-100 text-[9px] font-semibold uppercase tracking-wide text-gray-500 dark:border-white/5 dark:text-gray-400">
                   <TableRow>
@@ -832,11 +1171,583 @@ export default function LogsPageClient() {
                   </TableBody>
                 )}
               </Table>
-            )}
+            ) : activeTab === "crawl_tasks" ? (
+              /* Crawl Tasks Content */
+              <div className="p-4 space-y-4">
+                {/* Crawl Summary Stats */}
+                {crawlSummary && (
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 mb-4">
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800/50">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">Total Tasks</p>
+                        <FaSpider className="w-3 h-3 text-gray-400" />
+                      </div>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">{crawlSummary.total_tasks}</p>
+                    </div>
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-900/30">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-medium text-blue-600 dark:text-blue-400">Running</p>
+                        <FaPlay className="w-3 h-3 text-blue-400 animate-pulse" />
+                      </div>
+                      <p className="text-lg font-bold text-blue-700 dark:text-blue-300">{crawlSummary.running_tasks}</p>
+                    </div>
+                    <div className="rounded-lg border border-success-200 bg-success-50 p-2 dark:border-success-800 dark:bg-success-900/30">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-medium text-success-600 dark:text-success-400">Completed</p>
+                        <FaCheckCircle className="w-3 h-3 text-success-400" />
+                      </div>
+                      <p className="text-lg font-bold text-success-700 dark:text-success-300">{crawlSummary.completed_tasks}</p>
+                    </div>
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800/50">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">Pages Crawled</p>
+                        <FaGlobe className="w-3 h-3 text-gray-400" />
+                      </div>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">{crawlSummary.total_pages_crawled.toLocaleString()}</p>
+                    </div>
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800/50">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">URLs Found</p>
+                        <FaLink className="w-3 h-3 text-gray-400" />
+                      </div>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">{crawlSummary.total_urls_found.toLocaleString()}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Cache Management Section */}
+                <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                  <button
+                    onClick={() => {
+                      setShowCacheSection(!showCacheSection);
+                      if (!showCacheSection && !cacheStats) {
+                        fetchCacheStats();
+                      }
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-2 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FaDatabase className="w-4 h-4 text-purple-500" />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Cache Management</span>
+                    </div>
+                    <svg
+                      className={`w-4 h-4 text-gray-500 transition-transform ${showCacheSection ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {showCacheSection && (
+                    <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4">
+                      {/* Cache Stats */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                        <div className="rounded-lg border border-purple-200 bg-purple-50 p-2 dark:border-purple-800 dark:bg-purple-900/20">
+                          <p className="text-[10px] font-medium text-purple-600 dark:text-purple-400">Status</p>
+                          <p className={`text-lg font-bold ${cacheStats?.enabled ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {cacheStatsLoading ? '...' : (cacheStats?.enabled ? 'Enabled' : 'Disabled')}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-purple-200 bg-purple-50 p-2 dark:border-purple-800 dark:bg-purple-900/20">
+                          <p className="text-[10px] font-medium text-purple-600 dark:text-purple-400">Cached Keys</p>
+                          <p className="text-lg font-bold text-purple-700 dark:text-purple-300">
+                            {cacheStatsLoading ? '...' : (cacheStats?.keys?.toLocaleString() || '0')}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-purple-200 bg-purple-50 p-2 dark:border-purple-800 dark:bg-purple-900/20">
+                          <p className="text-[10px] font-medium text-purple-600 dark:text-purple-400">Memory Used</p>
+                          <p className="text-lg font-bold text-purple-700 dark:text-purple-300">
+                            {cacheStatsLoading ? '...' : (cacheStats?.memory_used || '0')}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-green-200 bg-green-50 p-2 dark:border-green-800 dark:bg-green-900/20">
+                          <p className="text-[10px] font-medium text-green-600 dark:text-green-400">Cache Hits</p>
+                          <p className="text-lg font-bold text-green-700 dark:text-green-300">
+                            {cacheStatsLoading ? '...' : (cacheStats?.hits?.toLocaleString() || '0')}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-orange-200 bg-orange-50 p-2 dark:border-orange-800 dark:bg-orange-900/20">
+                          <p className="text-[10px] font-medium text-orange-600 dark:text-orange-400">Cache Misses</p>
+                          <p className="text-lg font-bold text-orange-700 dark:text-orange-300">
+                            {cacheStatsLoading ? '...' : (cacheStats?.misses?.toLocaleString() || '0')}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-900/20">
+                          <p className="text-[10px] font-medium text-blue-600 dark:text-blue-400">Hit Rate</p>
+                          <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                            {cacheStatsLoading ? '...' : `${(cacheStats?.hit_rate || 0).toFixed(1)}%`}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Cache Actions */}
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        {/* Delete cache for URL */}
+                        <div className="flex-1 flex gap-2">
+                          <input
+                            type="url"
+                            value={deleteCacheUrl}
+                            onChange={(e) => setDeleteCacheUrl(e.target.value)}
+                            placeholder="Enter URL to delete from cache..."
+                            className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          />
+                          <button
+                            onClick={handleDeleteCacheUrl}
+                            disabled={deletingCacheUrl || !deleteCacheUrl.trim()}
+                            className="px-3 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 rounded-lg transition-colors flex items-center gap-1"
+                          >
+                            {deletingCacheUrl ? (
+                              <FaSync className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <FaTimesCircle className="w-3 h-3" />
+                            )}
+                            Delete
+                          </button>
+                        </div>
+
+                        {/* Refresh stats & Clear all */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={fetchCacheStats}
+                            disabled={cacheStatsLoading}
+                            className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-1"
+                          >
+                            <FaSync className={`w-3 h-3 ${cacheStatsLoading ? 'animate-spin' : ''}`} />
+                            Refresh
+                          </button>
+                          <button
+                            onClick={handleClearAllCache}
+                            disabled={clearingAllCache}
+                            className="px-3 py-2 text-sm font-medium text-white bg-error-600 hover:bg-error-700 disabled:bg-gray-400 rounded-lg transition-colors flex items-center gap-1"
+                          >
+                            {clearingAllCache ? (
+                              <FaSync className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <FaTimesCircle className="w-3 h-3" />
+                            )}
+                            Clear All
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Auto-refresh toggle */}
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                      Auto-refresh every 5 seconds
+                    </span>
+                    <button
+                      onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                        autoRefreshEnabled ? 'bg-brand-500' : 'bg-gray-300 dark:bg-gray-600'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                          autoRefreshEnabled ? 'translate-x-5' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  {selectedTask && (
+                    <button
+                      onClick={() => {
+                        setSelectedTask(null);
+                        setCrawlPages([]);
+                      }}
+                      className="text-[11px] text-brand-600 hover:text-brand-700 dark:text-brand-400 flex items-center gap-1"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                      </svg>
+                      Back to Tasks
+                    </button>
+                  )}
+                </div>
+
+                {/* Crawl Tasks Table or Pages Table */}
+                {!selectedTask ? (
+                  /* Tasks List */
+                  <Table>
+                    <TableHeader className="border-b border-gray-100 text-[9px] font-semibold uppercase tracking-wide text-gray-500 dark:border-white/5 dark:text-gray-400">
+                      <TableRow>
+                        <TableCell className="px-2 py-1.5 w-[120px]">Created</TableCell>
+                        <TableCell className="px-2 py-1.5 min-w-[200px]">Domain / Seed URL</TableCell>
+                        <TableCell className="px-2 py-1.5 w-[80px]">Status</TableCell>
+                        <TableCell className="px-2 py-1.5 w-[100px]">Progress</TableCell>
+                        <TableCell className="px-2 py-1.5 w-[80px]">Duration</TableCell>
+                        <TableCell className="px-2 py-1.5 w-[80px]">URLs</TableCell>
+                        <TableCell className="px-2 py-1.5 w-[60px]">Proxy</TableCell>
+                        <TableCell className="px-2 py-1.5 min-w-[140px]">User</TableCell>
+                        <TableCell className="px-2 py-1.5 min-w-[140px]">Project</TableCell>
+                        <TableCell className="px-2 py-1.5 w-[60px]">Actions</TableCell>
+                      </TableRow>
+                    </TableHeader>
+                    {crawlTasksLoading ? (
+                      <TableSkeleton rows={10} columns={10} variant="logs" />
+                    ) : (
+                      <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
+                        {crawlTasks.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={9} className="px-5 py-8 text-center text-xs text-gray-500 dark:text-gray-400">
+                              No crawl tasks found.
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          crawlTasks.map((task) => (
+                            <TableRow key={task.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer" onClick={() => handleTaskSelect(task)}>
+                              <TableCell className="px-2 py-1.5 text-[11px] text-gray-600 dark:text-gray-300">
+                                {formatDateTime(task.created_at)}
+                              </TableCell>
+                              <TableCell className="px-2 py-1.5">
+                                <div className="flex flex-col gap-0.5">
+                                  <a
+                                    href={`https://${task.domain}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="flex items-center gap-1.5 text-[11px] font-medium text-gray-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400"
+                                  >
+                                    <div className="relative h-3.5 w-3.5 overflow-hidden rounded flex-shrink-0">
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img
+                                        src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(task.domain)}&sz=16`}
+                                        alt=""
+                                        className="h-full w-full object-cover"
+                                        onError={(e) => {
+                                          e.currentTarget.style.display = 'none';
+                                        }}
+                                      />
+                                    </div>
+                                    {task.domain}
+                                  </a>
+                                  <span className="text-[9px] text-gray-500 dark:text-gray-400 truncate max-w-[180px]">
+                                    {task.seed_url}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="px-2 py-1.5">
+                                {getCrawlStatusBadge(task.status)}
+                              </TableCell>
+                              <TableCell className="px-2 py-1.5">
+                                <div className="flex flex-col gap-0.5">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-[10px] text-success-600 dark:text-success-400">{task.pages_crawled}</span>
+                                    <span className="text-[10px] text-gray-400">/</span>
+                                    <span className="text-[10px] text-error-600 dark:text-error-400">{task.pages_failed}</span>
+                                  </div>
+                                  <div className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-success-500 transition-all"
+                                      style={{
+                                        width: `${task.max_pages > 0 ? Math.min((task.pages_crawled / task.max_pages) * 100, 100) : 0}%`
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="text-[9px] text-gray-400">max: {task.max_pages}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="px-2 py-1.5">
+                                <span className="text-[11px] text-gray-700 dark:text-gray-300">
+                                  {task.duration_seconds != null ? (
+                                    task.duration_seconds >= 60
+                                      ? `${Math.floor(task.duration_seconds / 60)}m ${Math.round(task.duration_seconds % 60)}s`
+                                      : `${task.duration_seconds.toFixed(1)}s`
+                                  ) : '—'}
+                                </span>
+                              </TableCell>
+                              <TableCell className="px-2 py-1.5">
+                                <div className="flex flex-col gap-0.5 text-[10px]">
+                                  <span className="text-gray-600 dark:text-gray-300">Found: {task.urls_found}</span>
+                                  <span className="text-gray-500 dark:text-gray-400">Queue: {task.urls_queued}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="px-2 py-1.5">
+                                {task.use_proxy ? (
+                                  <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30" title="Using Proxy">
+                                    <FaCheckCircle className="h-2.5 w-2.5 text-blue-600 dark:text-blue-400" />
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] text-gray-400 dark:text-gray-500">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="px-2 py-1.5 text-[11px]">
+                                {task.user_details ? (
+                                  <a
+                                    href={`/user/${task.user_details.id}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                                  >
+                                    <div className="relative h-5 w-5 overflow-hidden rounded-full border border-gray-100 flex-shrink-0 dark:border-gray-700">
+                                      <Image
+                                        src={task.user_details.avatar || generateAvatar(task.user_details.name)}
+                                        alt={task.user_details.name}
+                                        fill
+                                        sizes="20px"
+                                        className="object-cover"
+                                      />
+                                    </div>
+                                    <div className="flex flex-col min-w-0">
+                                      <p className="text-[11px] font-medium text-gray-900 dark:text-white truncate">
+                                        {task.user_details.name}
+                                      </p>
+                                    </div>
+                                  </a>
+                                ) : task.user_id ? (
+                                  <span className="inline-block rounded bg-green-100 px-1.5 py-0.5 text-[9px] font-mono text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                    {task.user_id.slice(0, 6)}
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] text-gray-400 dark:text-gray-500">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="px-2 py-1.5 text-[11px]">
+                                {task.project_details ? (
+                                  <a
+                                    href={`/projects/${task.project_details.id}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                                  >
+                                    <div className="relative h-5 w-5 overflow-hidden rounded border border-gray-100 flex-shrink-0 dark:border-gray-700">
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img
+                                        src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(task.project_details.url || '')}&sz=32`}
+                                        alt={task.project_details.name}
+                                        className="h-full w-full object-cover"
+                                        onError={(e) => {
+                                          e.currentTarget.style.display = 'none';
+                                        }}
+                                      />
+                                    </div>
+                                    <p className="text-[11px] font-medium text-gray-900 dark:text-white truncate">
+                                      {task.project_details.name}
+                                    </p>
+                                  </a>
+                                ) : task.project_id ? (
+                                  <span className="inline-block rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-mono text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                                    {task.project_id.slice(0, 6)}
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] text-gray-400 dark:text-gray-500">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="px-2 py-1.5">
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleTaskSelect(task);
+                                    }}
+                                    className="inline-flex items-center gap-1 rounded-md bg-brand-100 px-2 py-1 text-[10px] font-medium text-brand-700 transition-colors hover:bg-brand-200 dark:bg-brand-900/30 dark:text-brand-400 dark:hover:bg-brand-900/50"
+                                  >
+                                    <FaGlobe className="w-2.5 h-2.5" />
+                                    Pages
+                                  </button>
+                                  {(task.status === 'running' || task.status === 'pending') && (
+                                    <button
+                                      onClick={(e) => handleCancelCrawl(task.id, e)}
+                                      disabled={cancelingTaskId === task.id}
+                                      className="inline-flex items-center gap-1 rounded-md bg-error-100 px-2 py-1 text-[10px] font-medium text-error-700 transition-colors hover:bg-error-200 dark:bg-error-900/30 dark:text-error-400 dark:hover:bg-error-900/50 disabled:opacity-50"
+                                    >
+                                      {cancelingTaskId === task.id ? (
+                                        <FaSync className="w-2.5 h-2.5 animate-spin" />
+                                      ) : (
+                                        <FaTimesCircle className="w-2.5 h-2.5" />
+                                      )}
+                                      Cancel
+                                    </button>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    )}
+                  </Table>
+                ) : (
+                  /* Pages List for Selected Task */
+                  <div className="space-y-3">
+                    {/* Selected Task Info */}
+                    <div className="rounded-lg border border-brand-200 bg-brand-50 p-3 dark:border-brand-800 dark:bg-brand-900/20">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="relative h-5 w-5 overflow-hidden rounded flex-shrink-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(selectedTask.domain)}&sz=32`}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedTask.domain}</p>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400">{selectedTask.seed_url}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {getCrawlStatusBadge(selectedTask.status)}
+                          <span className="text-[11px] text-gray-600 dark:text-gray-300">
+                            {selectedTask.pages_crawled} pages crawled
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pages Table */}
+                    <Table>
+                      <TableHeader className="border-b border-gray-100 text-[9px] font-semibold uppercase tracking-wide text-gray-500 dark:border-white/5 dark:text-gray-400">
+                        <TableRow>
+                          <TableCell className="px-2 py-1.5 w-[120px]">Crawled At</TableCell>
+                          <TableCell className="px-2 py-1.5 min-w-[200px]">URL / Title</TableCell>
+                          <TableCell className="px-2 py-1.5 w-[70px]">Status</TableCell>
+                          <TableCell className="px-2 py-1.5 w-[70px]">Method</TableCell>
+                          <TableCell className="px-2 py-1.5 w-[80px]">Duration</TableCell>
+                          <TableCell className="px-2 py-1.5 w-[80px]">Content</TableCell>
+                          <TableCell className="px-2 py-1.5 w-[60px]">Links</TableCell>
+                          <TableCell className="px-2 py-1.5 w-[50px]">Proxy</TableCell>
+                          <TableCell className="px-2 py-1.5 w-[60px]">View</TableCell>
+                        </TableRow>
+                      </TableHeader>
+                      {crawlPagesLoading ? (
+                        <TableSkeleton rows={10} columns={9} variant="logs" />
+                      ) : (
+                        <TableBody className="divide-y divide-gray-100 dark:divide-white/5">
+                          {crawlPages.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={9} className="px-5 py-8 text-center text-xs text-gray-500 dark:text-gray-400">
+                                No pages crawled yet.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            crawlPages.map((page) => (
+                              <TableRow key={page.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                <TableCell className="px-2 py-1.5 text-[11px] text-gray-600 dark:text-gray-300">
+                                  {formatDateTime(page.crawled_at)}
+                                </TableCell>
+                                <TableCell className="px-2 py-1.5">
+                                  <div className="flex flex-col gap-0.5">
+                                    <a
+                                      href={page.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-[11px] text-brand-600 hover:text-brand-700 dark:text-brand-400 truncate max-w-[200px]"
+                                    >
+                                      {page.url}
+                                    </a>
+                                    {page.title && (
+                                      <span className="text-[10px] text-gray-600 dark:text-gray-400 truncate max-w-[200px]">
+                                        {page.title}
+                                      </span>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="px-2 py-1.5">
+                                  {page.status === "success" ? (
+                                    <span className="inline-flex items-center rounded-full bg-success-100 px-2 py-0.5 text-[10px] font-medium text-success-700 dark:bg-success-900/30 dark:text-success-400">
+                                      Success
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center rounded-full bg-error-100 px-2 py-0.5 text-[10px] font-medium text-error-700 dark:bg-error-900/30 dark:text-error-400" title={page.error_message || ''}>
+                                      Failed
+                                    </span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="px-2 py-1.5">
+                                  {page.method ? (
+                                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                      page.method === "fast"
+                                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                        : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                                    }`}>
+                                      {page.method === "fast" ? "Fast" : "Browser"}
+                                    </span>
+                                  ) : (
+                                    <span className="text-[11px] text-gray-400">—</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="px-2 py-1.5 text-[11px] text-gray-600 dark:text-gray-300">
+                                  {page.duration_ms ? `${(page.duration_ms / 1000).toFixed(2)}s` : "—"}
+                                </TableCell>
+                                <TableCell className="px-2 py-1.5 text-[11px] text-gray-600 dark:text-gray-300">
+                                  {page.content_length ? `${(page.content_length / 1024).toFixed(1)}KB` : "—"}
+                                </TableCell>
+                                <TableCell className="px-2 py-1.5 text-[11px] text-gray-600 dark:text-gray-300">
+                                  {page.links_count || 0}
+                                </TableCell>
+                                <TableCell className="px-2 py-1.5">
+                                  {page.proxy_used ? (
+                                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                                      <FaCheckCircle className="h-2.5 w-2.5 text-blue-600 dark:text-blue-400" />
+                                    </span>
+                                  ) : (
+                                    <span className="text-[11px] text-gray-400">—</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="px-2 py-1.5">
+                                  {(page.markdown_content || page.html_content) ? (
+                                    <button
+                                      onClick={() => handleViewContent(page.markdown_content || '', page.html_content || '', page.url, page.title || '')}
+                                      className="inline-flex items-center gap-1 rounded-md bg-indigo-100 px-2 py-1 text-[10px] font-medium text-indigo-700 transition-colors hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400"
+                                    >
+                                      <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                      </svg>
+                                      View
+                                    </button>
+                                  ) : (
+                                    <span className="text-[11px] text-gray-400">—</span>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      )}
+                    </Table>
+
+                    {/* Crawl Pages Pagination */}
+                    {crawlPagesTotal > limit && (
+                      <div className="flex items-center justify-between border-t border-gray-100 pt-2 dark:border-white/5">
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                          Showing {((crawlPagesPage - 1) * limit) + 1}–{Math.min(crawlPagesPage * limit, crawlPagesTotal)} of {crawlPagesTotal} pages
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleCrawlPagesPageChange(crawlPagesPage - 1)}
+                            disabled={crawlPagesPage === 1}
+                            className="rounded-full border border-gray-200 px-2.5 py-1 text-xs disabled:opacity-40 disabled:cursor-not-allowed dark:border-gray-700"
+                          >
+                            Prev
+                          </button>
+                          <span className="text-xs text-gray-600 dark:text-gray-300">
+                            {crawlPagesPage} / {crawlPagesTotalPages}
+                          </span>
+                          <button
+                            onClick={() => handleCrawlPagesPageChange(crawlPagesPage + 1)}
+                            disabled={crawlPagesPage === crawlPagesTotalPages}
+                            className="rounded-full border border-gray-200 px-2.5 py-1 text-xs disabled:opacity-40 disabled:cursor-not-allowed dark:border-gray-700"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination - Hide for crawl_tasks tab as it has its own pagination */}
+        {activeTab !== "crawl_tasks" && (
         <div className="flex flex-col gap-2 border-t border-gray-100 px-3 py-2 text-xs text-gray-500 dark:border-white/5 dark:text-gray-400 sm:flex-row sm:items-center sm:justify-between">
           <p>
             {rangeStart && rangeEnd && totalItems
@@ -874,7 +1785,109 @@ export default function LogsPageClient() {
             </button>
           </div>
         </div>
+        )}
       </div>
+
+      {/* Crawl Content Modal */}
+      {showContentModal && selectedContent && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => setShowContentModal(false)}
+        >
+          <div
+            className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 shadow-md flex-shrink-0">
+                  <FaSpider className="h-5 w-5 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                    {selectedContent.title || 'Page Content'}
+                  </h2>
+                  <a
+                    href={selectedContent.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-teal-600 dark:text-teal-400 hover:underline truncate block"
+                  >
+                    {selectedContent.url}
+                  </a>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowContentModal(false)}
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300 flex-shrink-0 ml-4"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 dark:border-gray-700 px-6">
+              <button
+                onClick={() => setContentViewTab('markdown')}
+                disabled={!selectedContent.markdown}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  contentViewTab === 'markdown'
+                    ? 'border-teal-500 text-teal-600 dark:text-teal-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                } ${!selectedContent.markdown ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                Markdown {selectedContent.markdown && `(${selectedContent.markdown.length.toLocaleString()})`}
+              </button>
+              <button
+                onClick={() => setContentViewTab('html')}
+                disabled={!selectedContent.html}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  contentViewTab === 'html'
+                    ? 'border-teal-500 text-teal-600 dark:text-teal-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                } ${!selectedContent.html ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                HTML {selectedContent.html && `(${selectedContent.html.length.toLocaleString()})`}
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="overflow-y-auto max-h-[calc(90vh-160px)] p-6">
+              <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
+                <div className="flex items-center justify-between border-b border-gray-200 bg-gray-100 px-4 py-2 dark:border-gray-700 dark:bg-gray-800">
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    {contentViewTab === 'markdown' ? 'Markdown' : 'HTML'} Content
+                  </span>
+                  <button
+                    onClick={() => {
+                      const content = contentViewTab === 'markdown' ? selectedContent.markdown : selectedContent.html;
+                      navigator.clipboard.writeText(content);
+                    }}
+                    className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  >
+                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+                {contentViewTab === 'markdown' ? (
+                  <pre className="overflow-x-auto p-4 text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words font-mono">
+                    {selectedContent.markdown || 'No markdown content available'}
+                  </pre>
+                ) : (
+                  <pre className="overflow-x-auto p-4 text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words font-mono">
+                    {selectedContent.html || 'No HTML content available'}
+                  </pre>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Manual Scrape Modal */}
       {showScrapeModal && (
@@ -906,6 +1919,205 @@ export default function LogsPageClient() {
             {/* Modal Content */}
             <div className="p-6">
               <WebScraper />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Start Crawl Modal */}
+      {showStartCrawlModal && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => setShowStartCrawlModal(false)}
+        >
+          <div
+            className="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900 rounded-t-xl">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 shadow-md">
+                  <FaSpider className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Start New Crawl</h2>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">Crawl a website and extract all pages</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowStartCrawlModal(false)}
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <form onSubmit={handleStartCrawl} className="p-6 space-y-4">
+              {/* Seed URL */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Seed URL *
+                </label>
+                <input
+                  type="url"
+                  value={startCrawlUrl}
+                  onChange={(e) => setStartCrawlUrl(e.target.value)}
+                  placeholder="https://example.com"
+                  required
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                />
+                <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">
+                  The starting URL for the crawler
+                </p>
+              </div>
+
+              {/* Max Pages */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Max Pages
+                </label>
+                <input
+                  type="number"
+                  value={startCrawlMaxPages}
+                  onChange={(e) => setStartCrawlMaxPages(parseInt(e.target.value) || 100)}
+                  min={1}
+                  max={10000}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                />
+                <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">
+                  Maximum number of pages to crawl (1-10000)
+                </p>
+              </div>
+
+              {/* Options Row */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Use Proxy */}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setStartCrawlUseProxy(!startCrawlUseProxy)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                      startCrawlUseProxy ? 'bg-teal-500' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                        startCrawlUseProxy ? 'translate-x-5' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Use Proxy</span>
+                </div>
+
+                {/* Respect Robots */}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setStartCrawlRespectRobots(!startCrawlRespectRobots)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                      startCrawlRespectRobots ? 'bg-teal-500' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                        startCrawlRespectRobots ? 'translate-x-5' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Respect robots.txt</span>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={startCrawlLoading || !startCrawlUrl.trim()}
+                className="w-full flex items-center justify-center px-6 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400 text-white font-medium transition-colors text-sm"
+              >
+                {startCrawlLoading ? (
+                  <>
+                    <FaSync className="animate-spin mr-2 h-4 w-4" />
+                    Starting Crawl...
+                  </>
+                ) : (
+                  <>
+                    <FaSpider className="mr-2 h-4 w-4" />
+                    Start Crawl
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Response Content Modal */}
+      {showResponseModal && selectedResponse && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => setShowResponseModal(false)}
+        >
+          <div
+            className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-md flex-shrink-0">
+                  <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Response Content</h2>
+                  <a
+                    href={selectedResponse.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline truncate block"
+                  >
+                    {selectedResponse.url}
+                  </a>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowResponseModal(false)}
+                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300 flex-shrink-0 ml-4"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="overflow-y-auto max-h-[calc(90vh-100px)] p-6">
+              <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
+                <div className="flex items-center justify-between border-b border-gray-200 bg-gray-100 px-4 py-2 dark:border-gray-700 dark:bg-gray-800">
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    Content ({selectedResponse.content.length.toLocaleString()} characters)
+                  </span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedResponse.content);
+                    }}
+                    className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  >
+                    <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+                <pre className="overflow-x-auto p-4 text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words font-mono">
+                  {selectedResponse.content}
+                </pre>
+              </div>
             </div>
           </div>
         </div>
