@@ -23,6 +23,7 @@ interface UserOption {
   id: string;
   name: string;
   email: string;
+  avatar: string;
 }
 
 interface AddAuthorizedUserModalProps {
@@ -34,7 +35,7 @@ interface AddAuthorizedUserModalProps {
 export function AddAuthorizedUserModal({ isOpen, onClose, onCreated }: AddAuthorizedUserModalProps) {
   const [formState, setFormState] = useState({
     email: "",
-    company_name: "",
+    company_name: "Schbang",
     user_id: "",
   });
   const [error, setError] = useState<string | null>(null);
@@ -69,10 +70,11 @@ export function AddAuthorizedUserModal({ isOpen, onClose, onCreated }: AddAuthor
 
         if (response.ok) {
           const data = await response.json();
-          setUsers(data.users.map((u: { id: string; name: string; email: string }) => ({
+          setUsers(data.users.map((u: { id: string; name: string; email: string; avatar: string }) => ({
             id: u.id,
             name: u.name,
             email: u.email,
+            avatar: u.avatar,
           })));
         }
       } catch (err) {
@@ -159,7 +161,7 @@ export function AddAuthorizedUserModal({ isOpen, onClose, onCreated }: AddAuthor
   };
 
   const resetForm = () => {
-    setFormState({ email: "", company_name: "", user_id: "" });
+    setFormState({ email: "", company_name: "Schbang", user_id: "" });
     setSearchQuery("");
     setSelectedUser(null);
     setError(null);
@@ -241,6 +243,11 @@ export function AddAuthorizedUserModal({ isOpen, onClose, onCreated }: AddAuthor
                       onClick={() => handleSelectUser(user)}
                       className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="h-8 w-8 rounded-full object-cover flex-shrink-0"
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                           {user.name}
