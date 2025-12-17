@@ -34,7 +34,7 @@ const navItems: NavItem[] = [
   },
   {
     icon: <FaUserShield />,
-    name: "Authorized Users",
+    name: "Schbang Users",
     path: "/authorized-users",
   },
   {

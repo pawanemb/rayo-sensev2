@@ -35,12 +35,44 @@ export async function GET(request: NextRequest) {
       throw new Error(`Failed to fetch authorized users: ${error.message}`);
     }
 
+    // Fetch user details for linked users
+    const userIds = (authorizedUsers || [])
+      .filter(u => u.user_id)
+      .map(u => u.user_id);
+
+    const userMap = new Map<string, { name: string; avatar: string }>();
+
+    if (userIds.length > 0) {
+      // Fetch users from Supabase Auth
+      for (const userId of userIds) {
+        try {
+          const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
+          if (userData?.user) {
+            const name = userData.user.user_metadata?.full_name ||
+                        userData.user.user_metadata?.name ||
+                        userData.user.email?.split('@')[0] || 'User';
+            const avatar = userData.user.user_metadata?.avatar_url || '';
+            userMap.set(userId, { name, avatar });
+          }
+        } catch {
+          // Skip if user not found
+        }
+      }
+    }
+
+    // Attach user info to authorized users
+    const enrichedUsers = (authorizedUsers || []).map(u => ({
+      ...u,
+      user_name: u.user_id ? userMap.get(u.user_id)?.name || null : null,
+      user_avatar: u.user_id ? userMap.get(u.user_id)?.avatar || null : null,
+    }));
+
     // Calculate pagination metadata
     const total = count || 0;
     const totalPages = Math.max(1, Math.ceil(total / limit));
 
     return NextResponse.json({
-      authorizedUsers: authorizedUsers || [],
+      authorizedUsers: enrichedUsers,
       pagination: {
         currentPage: page,
         totalPages,

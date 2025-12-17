@@ -177,7 +177,7 @@ export function AddAuthorizedUserModal({ isOpen, onClose, onCreated }: AddAuthor
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="md">
       <ModalHeader>
-        <ModalTitle>Add authorized user</ModalTitle>
+        <ModalTitle>Add Schbang user</ModalTitle>
         <ModalDescription>
           Select a user from the list and enter their company name.
         </ModalDescription>

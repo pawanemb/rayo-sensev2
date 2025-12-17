@@ -30,10 +30,10 @@ export function DeleteAuthorizedUserModal({
   return (
     <Modal isOpen={isOpen} onClose={onCancel} size="md">
       <ModalHeader>
-        <ModalTitle>Remove authorized user</ModalTitle>
+        <ModalTitle>Remove Schbang user</ModalTitle>
         <ModalDescription>
           Are you sure you want to remove <span className="font-semibold">{user.email}</span> from
-          the authorized users list? This will prevent them from registering if they haven&apos;t already.
+          the Schbang users list?
         </ModalDescription>
       </ModalHeader>
 

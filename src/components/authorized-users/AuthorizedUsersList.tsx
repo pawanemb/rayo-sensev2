@@ -11,7 +11,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
-import { AddAuthorizedUserModal, type AuthorizedUser } from "./AddAuthorizedUserModal";
+import { AddAuthorizedUserModal } from "./AddAuthorizedUserModal";
+
+interface AuthorizedUser {
+  id: string;
+  email: string;
+  company_name: string;
+  user_id: string | null;
+  user_name: string | null;
+  user_avatar: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
 import { DeleteAuthorizedUserModal } from "./DeleteAuthorizedUserModal";
 
 interface PaginationInfo {
@@ -185,7 +196,7 @@ export default function AuthorizedUsersList() {
       <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white px-6 py-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Authorized users
+            Schbang users
             {typeof pagination.total === "number" && (
               <span className="ml-3 rounded-full bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-600 dark:text-brand-300">
                 {pagination.total.toLocaleString()} {searchTerm ? 'results' : 'users'}
@@ -236,7 +247,7 @@ export default function AuthorizedUsersList() {
                 <TableRow>
                   <TableCell className="px-5 py-4">Email</TableCell>
                   <TableCell className="px-5 py-4">Company</TableCell>
-                  <TableCell className="px-5 py-4">Registered</TableCell>
+                  <TableCell className="px-5 py-4">User</TableCell>
                   <TableCell className="px-5 py-4">Created</TableCell>
                   <TableCell className="px-5 py-4">Actions</TableCell>
                 </TableRow>
@@ -248,7 +259,7 @@ export default function AuthorizedUsersList() {
                   {users.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="px-5 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
-                        No authorized users found.
+                        No Schbang users found.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -281,14 +292,23 @@ export default function AuthorizedUsersList() {
                           {user.company_name}
                         </TableCell>
                         <TableCell className="px-5 py-4">
-                          {user.user_id ? (
-                            <span className="inline-flex items-center rounded-full bg-success-100 px-2.5 py-0.5 text-xs font-medium text-success-700 dark:bg-success-500/20 dark:text-success-300">
-                              Yes
-                            </span>
+                          {user.user_id && user.user_name ? (
+                            <div className="flex items-center gap-2">
+                              {user.user_avatar ? (
+                                <img
+                                  src={user.user_avatar}
+                                  alt={user.user_name}
+                                  className="h-7 w-7 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="h-7 w-7 rounded-full bg-brand-100 flex items-center justify-center text-xs font-medium text-brand-600">
+                                  {user.user_name.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <span className="text-sm text-gray-900 dark:text-white">{user.user_name}</span>
+                            </div>
                           ) : (
-                            <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                              No
-                            </span>
+                            <span className="text-sm text-gray-400">—</span>
                           )}
                         </TableCell>
                         <TableCell className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
