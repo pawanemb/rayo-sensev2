@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import { BsFillGrid3X3GapFill } from "react-icons/bs";
 import { IoDocumentTextOutline, IoImagesOutline, IoFlaskOutline } from "react-icons/io5";
-import { FaChevronDown, FaCube, FaListAlt, FaRegUserCircle, FaWpforms } from "react-icons/fa";
+import { FaChevronDown, FaCube, FaListAlt, FaRegUserCircle, FaUserShield, FaWpforms } from "react-icons/fa";
 import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
@@ -31,6 +31,11 @@ const navItems: NavItem[] = [
     icon: <FaRegUserCircle />,
     name: "Users",
     path: "/user",
+  },
+  {
+    icon: <FaUserShield />,
+    name: "Authorized Users",
+    path: "/authorized-users",
   },
   {
     icon: <FaCube />,
