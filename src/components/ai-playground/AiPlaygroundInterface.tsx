@@ -3,8 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
+import { Maximize2 } from 'lucide-react';
 import { AVAILABLE_MODELS, API_INTERFACES, ApiInterface } from '@/lib/constants/models';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Modal, ModalBody, ModalHeader, ModalTitle } from '@/components/ui/modal';
 import MultiModelSelector from './MultiModelSelector';
 import ResponseDisplay from './ResponseDisplay';
 import ModelConfigCard from './ModelConfigCard';
@@ -48,6 +50,7 @@ export default function AiPlaygroundInterface() {
   
   const [systemPrompt, setSystemPrompt] = useState('');
   const [userPrompt, setUserPrompt] = useState('');
+  const [expandedField, setExpandedField] = useState<'system' | 'user' | null>(null);
   
   // Response State (keyed by model ID)
   const [responses, setResponses] = useState<Record<string, string>>({});
@@ -380,9 +383,19 @@ export default function AiPlaygroundInterface() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                  System Prompt
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    System Prompt
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setExpandedField('system')}
+                    className="text-gray-500 hover:text-brand-600 dark:text-gray-400 dark:hover:text-brand-400 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    title="Expand system prompt editor"
+                  >
+                    <Maximize2 size={16} />
+                  </button>
+                </div>
                 <textarea
                   value={systemPrompt}
                   onChange={(e) => setSystemPrompt(e.target.value)}
@@ -391,9 +404,19 @@ export default function AiPlaygroundInterface() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                  User Prompt
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    User Prompt
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setExpandedField('user')}
+                    className="text-gray-500 hover:text-brand-600 dark:text-gray-400 dark:hover:text-brand-400 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    title="Expand user prompt editor"
+                  >
+                    <Maximize2 size={16} />
+                  </button>
+                </div>
                 <textarea
                   value={userPrompt}
                   onChange={(e) => setUserPrompt(e.target.value)}
@@ -452,6 +475,36 @@ export default function AiPlaygroundInterface() {
           })
         )}
       </div>
+
+      {/* Prompt Expansion Modal */}
+      <Modal 
+        isOpen={!!expandedField} 
+        onClose={() => setExpandedField(null)}
+        size="xl"
+        className="max-w-4xl"
+      >
+        <ModalHeader>
+          <ModalTitle>Edit {expandedField === 'system' ? 'System' : 'User'} Prompt</ModalTitle>
+        </ModalHeader>
+        <ModalBody>
+          <textarea
+            value={expandedField === 'system' ? systemPrompt : userPrompt}
+            onChange={(e) => expandedField === 'system' ? setSystemPrompt(e.target.value) : setUserPrompt(e.target.value)}
+            className="w-full h-[60vh] p-4 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-base focus:ring-2 focus:ring-brand-500 outline-none transition-all resize-none font-mono"
+            placeholder={`Enter your ${expandedField} prompt here...`}
+            autoFocus
+          />
+          <div className="flex justify-end pt-2">
+             <button
+                type="button"
+                onClick={() => setExpandedField(null)}
+                className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors shadow-sm"
+             >
+                Done
+             </button>
+          </div>
+        </ModalBody>
+      </Modal>
     </div>
   );
 }
