@@ -17,6 +17,8 @@ export class GeminiService {
     temperature?: number;
     max_tokens?: number;
     webSearch?: boolean;
+    codeExecution?: boolean;
+    urlContext?: boolean;
     thinking?: { type: "enabled", budget_tokens: number }; // Adapter for thinking
   }): Promise<ReadableStream> {
     
@@ -51,6 +53,12 @@ export class GeminiService {
     const tools: any[] = [];
     if (params.webSearch) {
       tools.push({ googleSearch: {} });
+    }
+    if (params.codeExecution) {
+      tools.push({ codeExecution: {} });
+    }
+    if (params.urlContext) {
+      tools.push({ urlContext: {} });
     }
 
     if (systemInstruction) {
@@ -89,8 +97,8 @@ export class GeminiService {
              (config as any).thinkingConfig = {
                  thinkingLevel: 'HIGH'
              };
-        } else if (params.model.includes('gemini-2.5-pro')) {
-             // For gemini-2.5-pro, use thinkingBudget: -1 as per example
+        } else if (params.model.includes('gemini-2.5-pro') || params.model.includes('gemini-flash-latest')) {
+             // For gemini-2.5-pro and gemini-flash-latest, use thinkingBudget: -1 as per example
              (config as any).thinkingConfig = {
                  thinkingBudget: -1
              };

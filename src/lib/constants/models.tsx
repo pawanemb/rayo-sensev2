@@ -184,15 +184,15 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
   { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5 Flash Image', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0.30, output: 30 } },
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0.30, output: 2.50 } },
   { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash-Lite', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0.10, output: 0.40 } },
-  { id: 'gemini-2.5-computer-use-preview', name: 'Gemini 2.5 Computer Use', interface: 'gemini-api', icon: <SiGoogle />, category: 'reasoning', outputTokenLimit: 8192, pricing: { input: 1.25, output: 10 } },
 
   // Gemini 2.0
   { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0.10, output: 0.40 } },
   { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash-Lite', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0.075, output: 0.30 } },
 
   // Gemini 1.5
-  { id: 'gemini-1.5-pro-latest', name: 'Gemini 1.5 Pro (Latest)', interface: 'gemini-api', icon: <SiGoogle />, category: 'flagship', outputTokenLimit: 8192, pricing: { input: 1.25, output: 10 } },
-  { id: 'gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash (Latest)', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0.30, output: 2.50 } },
+  { id: 'gemini-1.5-pro-latest', name: 'Gemini 1.5 Pro (Latest)', interface: 'gemini-api', icon: <SiGoogle />, category: 'flagship', outputTokenLimit: 8192, pricing: { input: 1.25, output: 10 }, supportsThinking: true },
+  { id: 'gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash (Latest)', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0.30, output: 2.50 }, supportsThinking: true },
+  { id: 'gemini-flash-latest', name: 'Gemini Flash (Latest)', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0.30, output: 2.50 }, supportsThinking: true },
 
   // --- OpenRouter Models ---
   // OpenAI

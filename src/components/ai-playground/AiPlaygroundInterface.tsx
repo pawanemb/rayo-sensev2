@@ -23,6 +23,8 @@ interface ModelConfig {
   store: boolean;
   include: string[];
   webSearch: boolean;
+  codeExecution: boolean;
+  urlContext: boolean;
 }
 
 const DEFAULT_CONFIG: ModelConfig = {
@@ -36,7 +38,9 @@ const DEFAULT_CONFIG: ModelConfig = {
   verbosity: 'medium',
   store: false,
   include: [],
-  webSearch: false
+  webSearch: false,
+  codeExecution: false,
+  urlContext: false
 };
 
 export default function AiPlaygroundInterface() {
@@ -246,7 +250,9 @@ export default function AiPlaygroundInterface() {
         },
         body: JSON.stringify({
           ...body,
-          webSearch: config.webSearch // Pass webSearch to backend for Gemini
+          webSearch: config.webSearch, // Pass webSearch to backend for Gemini
+          codeExecution: config.codeExecution, // Pass codeExecution to backend
+          urlContext: config.urlContext // Pass urlContext to backend
         })
       });
 
@@ -331,13 +337,21 @@ export default function AiPlaygroundInterface() {
                    // thinking_delta is ignored
                  }
               } else if (isThisModelGemini) {
-                 const part = parsed.candidates?.[0]?.content?.parts?.[0];
-                 if (part?.text) {
-                    content = part.text;
-                 } else if (part?.inlineData) {
-                    // Handle image generation (multimodal)
-                    const { mimeType, data } = part.inlineData;
-                    content = `\n\n![Generated Image](data:${mimeType};base64,${data})\n\n`;
+                 const parts = parsed.candidates?.[0]?.content?.parts || [];
+                 for (const part of parts) {
+                    if (part.text) {
+                       content += part.text;
+                    } else if (part.executableCode) {
+                       const { language, code } = part.executableCode;
+                       content += `\n\n\`\`\`${language.toLowerCase()}\n${code}\n\`\`\`\n\n`;
+                    } else if (part.codeExecutionResult) {
+                       const { outcome, output } = part.codeExecutionResult;
+                       content += `\n\n**Code Execution Result (${outcome})**:\n\`\`\`\n${output}\n\`\`\`\n\n`;
+                    } else if (part.inlineData) {
+                       // Handle image generation (multimodal)
+                       const { mimeType, data } = part.inlineData;
+                       content += `\n\n![Generated Image](data:${mimeType};base64,${data})\n\n`;
+                    }
                  }
                  // Gemini usage
                  const usage = parsed.usageMetadata;

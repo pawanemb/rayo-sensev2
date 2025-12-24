@@ -241,6 +241,30 @@ export default function ModelConfigCard({
                       />
                       <span className="text-xs text-gray-700 dark:text-gray-300">Store Response</span>
                     </label>
+
+                    {isGemini && (
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={config.codeExecution || false} 
+                            onChange={(e) => updateConfig({ codeExecution: e.target.checked })}
+                            className="w-3.5 h-3.5 text-brand-600 border-gray-300 rounded focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700" 
+                          />
+                          <span className="text-xs text-gray-700 dark:text-gray-300">Code Execution</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={config.urlContext || false} 
+                            onChange={(e) => updateConfig({ urlContext: e.target.checked })}
+                            className="w-3.5 h-3.5 text-brand-600 border-gray-300 rounded focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700" 
+                          />
+                          <span className="text-xs text-gray-700 dark:text-gray-300">URL Context</span>
+                        </label>
+                      </div>
+                    )}
                 </div>
               </div>
             )}
