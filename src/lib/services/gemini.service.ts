@@ -93,21 +93,26 @@ export class GeminiService {
             async start(controller) {
                 try {
                     for await (const chunk of response) {
-                        // Extract text from chunk
+                        // Extract text and usage data
                         const text = chunk.text; 
+                        const usageMetadata = chunk.usageMetadata;
+                        
+                        // Construct payload for frontend parser
+                        const payload: Record<string, any> = {};
+                        
                         if (text) {
-                            // Send as SSE format for frontend parser
-                            // Frontend expects: data: { candidates: ... } or match parsing logic.
-                            // My frontend 'AiPlaygroundInterface' handles:
-                            // candidates[0].content.parts[0].text
-                            // I should construct a compatible JSON.
-                            const payload = {
-                                candidates: [{
-                                    content: {
-                                        parts: [{ text }]
-                                    }
-                                }]
-                            };
+                            payload.candidates = [{
+                                content: {
+                                    parts: [{ text }]
+                                }
+                            }];
+                        }
+                        
+                        if (usageMetadata) {
+                            payload.usageMetadata = usageMetadata;
+                        }
+                        
+                        if (Object.keys(payload).length > 0) {
                             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(payload)}\n\n`));
                         }
                     }
