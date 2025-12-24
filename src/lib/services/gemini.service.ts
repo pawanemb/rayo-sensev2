@@ -16,6 +16,7 @@ export class GeminiService {
     messages: Array<{ role: string; content: string }>;
     temperature?: number;
     max_tokens?: number;
+    webSearch?: boolean;
     thinking?: { type: "enabled", budget_tokens: number }; // Adapter for thinking
   }): Promise<ReadableStream> {
     
@@ -37,10 +38,20 @@ export class GeminiService {
     }
 
     // Config
-    const config: GenerateContentConfig & { thinkingConfig?: any } = {
+    const config: GenerateContentConfig & { thinkingConfig?: any, responseModalities?: string[] } = {
       temperature: params.temperature,
       maxOutputTokens: params.max_tokens,
     };
+
+    if (params.model.includes('image')) {
+      config.responseModalities = ['IMAGE', 'TEXT'];
+    }
+    
+    // Tools
+    const tools: any[] = [];
+    if (params.webSearch) {
+      tools.push({ googleSearch: {} });
+    }
 
     if (systemInstruction) {
         config.systemInstruction = {
@@ -78,10 +89,19 @@ export class GeminiService {
              (config as any).thinkingConfig = {
                  thinkingLevel: 'HIGH'
              };
+        } else if (params.model.includes('gemini-2.5-pro')) {
+             // For gemini-2.5-pro, use thinkingBudget: -1 as per example
+             (config as any).thinkingConfig = {
+                 thinkingBudget: -1
+             };
         }
     }
 
     try {
+        if (tools.length > 0) {
+          config.tools = tools;
+        }
+
         const response = await this.client.models.generateContentStream({
             model: params.model,
             config: config,

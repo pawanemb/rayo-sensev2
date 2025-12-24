@@ -182,6 +182,7 @@ export default function AiPlaygroundInterface() {
 
       // Check Capabilities
       const isOSeries = modelId.startsWith('o1') || modelId.startsWith('o3') || modelId.startsWith('o4');
+      const isGemini3 = modelId.includes('gemini-3');
       const isThisModelAnthropic = modelInfo.interface === 'anthropic' || modelInfo.interface === 'claude-opus-4';
       const isThisModelGemini = modelInfo.interface === 'gemini-api';
       const isThisModelThinking = modelInfo.supportsThinking ?? (
@@ -243,7 +244,10 @@ export default function AiPlaygroundInterface() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify({
+          ...body,
+          webSearch: config.webSearch // Pass webSearch to backend for Gemini
+        })
       });
 
       if (!res.ok) {
@@ -327,8 +331,13 @@ export default function AiPlaygroundInterface() {
                    // thinking_delta is ignored
                  }
               } else if (isThisModelGemini) {
-                 if (parsed.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    content = parsed.candidates[0].content.parts[0].text;
+                 const part = parsed.candidates?.[0]?.content?.parts?.[0];
+                 if (part?.text) {
+                    content = part.text;
+                 } else if (part?.inlineData) {
+                    // Handle image generation (multimodal)
+                    const { mimeType, data } = part.inlineData;
+                    content = `\n\n![Generated Image](data:${mimeType};base64,${data})\n\n`;
                  }
                  // Gemini usage
                  const usage = parsed.usageMetadata;
