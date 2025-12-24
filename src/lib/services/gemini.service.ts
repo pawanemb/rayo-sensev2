@@ -73,36 +73,16 @@ export class GeminiService {
     // I'll check model name.
     const isThinkingModel = params.model.includes('thinking') || params.model.includes('gemini-3');
 
-    if (isThinkingModel || params.thinking) {
-        // If thinking is enabled in UI (params.thinking) OR model implies it
-        // User snippet used:
-        // config = { thinkingConfig: { thinkingLevel: 'HIGH' } }
-        // Note: For gemini-2.0-flash-thinking-exp, we usually just use the model name.
-        // But for gemini-3-pro-preview as per user snippet, we need thinkingConfig.
+    if (isThinkingModel && params.thinking) {
+        // Apply thinkingConfig only if user explicitly enabled thinking in UI
+        // Note: API rejects having both thinkingLevel and thinkingBudget.
+        // We prioritize the user-defined thinkingBudget from the UI.
+        const budget = params.thinking.budget_tokens || 8192;
         
-        // Only apply thinkingConfig if user explicitly enabled thinking or it's implied?
-        // Let's apply it if params.thinking is present (from UI checkbox).
-        if (params.thinking) {
-             config.thinkingConfig = {
-                 includeThoughts: true, // Allow seeing thoughts if supported
-                 // thinkingLevel: 'HIGH' // Not in standard types yet? user snippet says so.
-             };
-             // User snippet passed thinkingConfig outside? No, inside config.
-             // Wait, user snippet:
-             // const config = { thinkingConfig: { thinkingLevel: 'HIGH' }, tools, ... }
-             // await ai.models.generateContentStream({ model, config, contents })
-             
-             // So I should put it in config.
-             // I'll cast to any to avoid type errors if SDK types are strict.
-             (config as any).thinkingConfig = {
-                 thinkingLevel: 'HIGH'
-             };
-        } else if (params.model.includes('gemini-2.5-pro') || params.model.includes('gemini-flash-latest')) {
-             // For gemini-2.5-pro and gemini-flash-latest, use thinkingBudget: -1 as per example
-             (config as any).thinkingConfig = {
-                 thinkingBudget: -1
-             };
-        }
+        (config as any).thinkingConfig = {
+            includeThoughts: true,
+            thinkingBudget: params.model.includes('gemini-flash-latest') ? -1 : budget
+        };
     }
 
     try {

@@ -180,9 +180,9 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
   { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro Image (Preview)', interface: 'gemini-api', icon: <SiGoogle />, category: 'flagship', outputTokenLimit: 64000, pricing: { input: 2, output: 12 } },
 
   // Gemini 2.5
-  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', interface: 'gemini-api', icon: <SiGoogle />, category: 'flagship', outputTokenLimit: 8192, pricing: { input: 1.25, output: 10 }, supportsThinking: true },
-  { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5 Flash Image', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0.30, output: 30 } },
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0.30, output: 2.50 } },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', interface: 'gemini-api', icon: <SiGoogle />, category: 'flagship', outputTokenLimit: 8192, pricing: { input: 1.25, output: 10 }, supportsThinking: false },
+  { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5 Flash Image', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0.30, output: 30 }, supportsThinking: false },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0.30, output: 2.50 }, supportsThinking: false },
   { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash-Lite', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0.10, output: 0.40 } },
 
   // Gemini 2.0
