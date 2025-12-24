@@ -13,6 +13,8 @@ interface ResponseDisplayProps {
   error: string | null;
   responseTime?: number;
   wordCount?: number;
+  usage?: { input_tokens: number, output_tokens: number };
+  cost?: number;
 }
 
 export default function ResponseDisplay({
@@ -20,7 +22,9 @@ export default function ResponseDisplay({
   loading,
   error,
   responseTime,
-  wordCount = 0
+  wordCount = 0,
+  usage,
+  cost
 }: ResponseDisplayProps) {
   const [copySuccess, setCopySuccess] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -57,15 +61,27 @@ export default function ResponseDisplay({
                {renderStatus()}
             </div>
             
-            <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
-              {responseTime !== undefined && (
-                <span className="text-xs text-gray-400">
-                  {responseTime.toFixed(2)}s
+            <div className="flex items-center gap-4 text-[10px] sm:text-xs" onClick={e => e.stopPropagation()}>
+              {usage && (
+                <div className="flex items-center gap-2 border-r border-gray-200 dark:border-gray-800 pr-3">
+                  <span className="text-gray-400 flex items-center gap-1">
+                    <span className="opacity-50">In:</span>
+                    <span className="font-mono text-gray-600 dark:text-gray-400">{usage.input_tokens}</span>
+                  </span>
+                  <span className="text-gray-400 flex items-center gap-1">
+                    <span className="opacity-50">Out:</span>
+                    <span className="font-mono text-gray-600 dark:text-gray-400">{usage.output_tokens}</span>
+                  </span>
+                </div>
+              )}
+              {cost !== undefined && cost > 0 && (
+                <span className="font-semibold text-brand-600 dark:text-brand-400 border-r border-gray-200 dark:border-gray-800 pr-3">
+                  ${cost.toFixed(9).replace(/\.?0+$/, '') || '0'}
                 </span>
               )}
-              {wordCount > 0 && (
-                <span className="text-xs text-gray-400">
-                  {wordCount} words
+              {responseTime !== undefined && (
+                <span className="text-gray-400">
+                  {responseTime.toFixed(2)}s
                 </span>
               )}
               {(response || loading) && (

@@ -56,7 +56,11 @@ export default function AiPlaygroundInterface() {
   const [isThinking, setIsThinking] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [metrics, setMetrics] = useState<Record<string, { time: number }>>({});
+  const [metrics, setMetrics] = useState<Record<string, { 
+    time: number, 
+    usage?: { input_tokens: number, output_tokens: number },
+    cost?: number
+  }>>({});
   
   // Derived State helpers
   const getModelInfo = (id: string) => AVAILABLE_MODELS.find(m => m.id === id);
@@ -159,6 +163,7 @@ export default function AiPlaygroundInterface() {
     setLoading(prev => ({ ...prev, [modelId]: true }));
     setErrors(prev => ({ ...prev, [modelId]: '' }));
     setResponses(prev => ({ ...prev, [modelId]: '' }));
+    setMetrics(prev => ({ ...prev, [modelId]: { time: 0, usage: undefined, cost: 0 } }));
     
     const startTime = Date.now();
 
@@ -268,7 +273,49 @@ export default function AiPlaygroundInterface() {
               const parsed = JSON.parse(data);
               let content = '';
 
-              if (parsed.type === 'response.output_text.delta') {
+              if (parsed.type === 'response.completed' && parsed.response?.usage) {
+                 // OpenAI v1/responses usage
+                 const usage = parsed.response.usage;
+                 let cost = 0;
+                 if (modelInfo.pricing) {
+                    cost = (usage.input_tokens * modelInfo.pricing.input + usage.output_tokens * modelInfo.pricing.output) / 1000000;
+                 }
+                 setMetrics(prev => ({ 
+                   ...prev, 
+                   [modelId]: { 
+                     ...prev[modelId], 
+                     usage: { input_tokens: usage.input_tokens, output_tokens: usage.output_tokens },
+                     cost
+                   } 
+                 }));
+              } else if (parsed.type === 'message_start') {
+                 // Anthropic usage
+                 const usage = parsed.message?.usage;
+                 if (usage) {
+                   setMetrics(prev => ({ 
+                     ...prev, 
+                     [modelId]: { 
+                       ...prev[modelId], 
+                       usage: { ...prev[modelId]?.usage, input_tokens: usage.input_tokens, output_tokens: usage.output_tokens || 0 } 
+                     } 
+                   }));
+                 }
+              } else if (parsed.type === 'message_delta') {
+                 // Anthropic cumulative usage
+                 const usage = parsed.usage;
+                 if (usage) {
+                    setMetrics(prev => ({ 
+                      ...prev, 
+                      [modelId]: { 
+                        ...prev[modelId], 
+                        usage: { 
+                          input_tokens: prev[modelId]?.usage?.input_tokens || 0, 
+                          output_tokens: usage.output_tokens 
+                        } 
+                      } 
+                    }));
+                 }
+              } else if (parsed.type === 'response.output_text.delta') {
                  // O1 / Responses API format
                  content = parsed.delta || '';
               } else if (isThisModelAnthropic) {
@@ -283,9 +330,32 @@ export default function AiPlaygroundInterface() {
                  if (parsed.candidates?.[0]?.content?.parts?.[0]?.text) {
                     content = parsed.candidates[0].content.parts[0].text;
                  }
+                 // Gemini usage
+                 const usage = parsed.usageMetadata;
+                 if (usage) {
+                    setMetrics(prev => ({ 
+                      ...prev, 
+                      [modelId]: { 
+                        ...prev[modelId], 
+                        usage: { input_tokens: usage.promptTokenCount, output_tokens: usage.candidatesTokenCount } 
+                      } 
+                    }));
+                 }
               } else {
                  // OpenAI / OpenRouter
                  content = parsed.choices?.[0]?.delta?.content || '';
+                 
+                 // OpenAI usage (often in last chunk or if stream_options: { include_usage: true })
+                 if (parsed.usage) {
+                    const usage = parsed.usage;
+                    setMetrics(prev => ({ 
+                      ...prev, 
+                      [modelId]: { 
+                        ...prev[modelId], 
+                        usage: { input_tokens: usage.prompt_tokens, output_tokens: usage.completion_tokens } 
+                      } 
+                    }));
+                 }
               }
 
               if (content) {
@@ -299,7 +369,24 @@ export default function AiPlaygroundInterface() {
         }
       }
 
-      setMetrics(prev => ({ ...prev, [modelId]: { time: (Date.now() - startTime) / 1000 } }));
+      const totalTime = (Date.now() - startTime) / 1000;
+      setMetrics(prev => {
+        const current = prev[modelId];
+        // If we don't have usage yet (e.g. some models might not have reported it in the stream), 
+        // or if cost is still 0 but we have usage, recalculate.
+        let cost = current?.cost || 0;
+        if (current?.usage && modelInfo.pricing && cost === 0) {
+          cost = (current.usage.input_tokens * modelInfo.pricing.input + current.usage.output_tokens * modelInfo.pricing.output) / 1000000;
+        }
+        return { 
+          ...prev, 
+          [modelId]: { 
+            ...current, 
+            time: totalTime,
+            cost
+          } 
+        };
+      });
 
     } catch (err: unknown) {
       console.error(`Error generating for ${modelId}:`, err);
@@ -472,6 +559,8 @@ export default function AiPlaygroundInterface() {
                   loading={loading[modelId]}
                   error={errors[modelId]}
                   responseTime={metrics[modelId]?.time}
+                  usage={metrics[modelId]?.usage}
+                  cost={metrics[modelId]?.cost}
                   wordCount={responses[modelId]?.trim().split(/\s+/).filter(w => w.length > 0).length || 0}
                 />
               </div>

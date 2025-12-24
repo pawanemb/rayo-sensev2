@@ -34,6 +34,10 @@ export interface ModelInfo {
   supportsThinking?: boolean;
   supportsReasoningEffort?: boolean;
   supportsVerbosity?: boolean;
+  pricing?: {
+    input: number; // per 1M tokens in USD
+    output: number; // per 1M tokens in USD
+  };
 }
 
 export const API_INTERFACES: Record<ApiInterface, InterfaceConfig> = {
@@ -113,57 +117,59 @@ export const API_INTERFACES: Record<ApiInterface, InterfaceConfig> = {
 export const AVAILABLE_MODELS: ModelInfo[] = [
   // --- OpenAI Models ---
   // Reasoning (O-Series)
-  { id: 'o1', name: 'O1', interface: 'openai-api', icon: <BsCpu />, category: 'reasoning', outputTokenLimit: 65536, supportsReasoningEffort: true },
-  { id: 'o3-pro', name: 'O3 Pro', interface: 'openai-api', icon: <BsCpu />, category: 'reasoning', outputTokenLimit: 65536, supportsReasoningEffort: true },
-  { id: 'o3-mini', name: 'O3 Mini', interface: 'openai-api', icon: <BsCpu />, category: 'reasoning', outputTokenLimit: 65536, supportsReasoningEffort: true },
-  { id: 'o4-mini-deep-research', name: 'O4 Mini Deep Research', interface: 'openai-api', icon: <BsCpu />, category: 'reasoning', outputTokenLimit: 65536, supportsReasoningEffort: true },
-  { id: 'o4-mini', name: 'O4 Mini', interface: 'openai-api', icon: <BsCpu />, category: 'reasoning', outputTokenLimit: 65536, supportsReasoningEffort: true },
+  { id: 'o1', name: 'O1', interface: 'openai-api', icon: <BsCpu />, category: 'reasoning', outputTokenLimit: 65536, supportsReasoningEffort: true, pricing: { input: 15, output: 60 } },
+  { id: 'o3-pro', name: 'O3 Pro', interface: 'openai-api', icon: <BsCpu />, category: 'reasoning', outputTokenLimit: 65536, supportsReasoningEffort: true, pricing: { input: 15, output: 60 } },
+  { id: 'o3-mini', name: 'O3 Mini', interface: 'openai-api', icon: <BsCpu />, category: 'reasoning', outputTokenLimit: 65536, supportsReasoningEffort: true, pricing: { input: 1.1, output: 4.4 } },
+  { id: 'o4-mini-deep-research', name: 'O4 Mini Deep Research', interface: 'openai-api', icon: <BsCpu />, category: 'reasoning', outputTokenLimit: 65536, supportsReasoningEffort: true, pricing: { input: 0.15, output: 0.6 } },
+  { id: 'o4-mini', name: 'O4 Mini', interface: 'openai-api', icon: <BsCpu />, category: 'reasoning', outputTokenLimit: 65536, supportsReasoningEffort: true, pricing: { input: 0.15, output: 0.6 } },
   
-  // GPT-5
-  { id: 'gpt-5-pro', name: 'GPT-5 Pro', interface: 'gpt-5', icon: <BsRobot />, category: 'flagship', outputTokenLimit: 16384, supportsReasoningEffort: true },
-  { id: 'gpt-5-codex', name: 'GPT-5 Codex', interface: 'gpt-5', icon: <BsCodeSquare />, category: 'coding', outputTokenLimit: 16384, supportsReasoningEffort: true },
-  { id: 'gpt-5-mini', name: 'GPT-5 Mini', interface: 'gpt-5', icon: <BsRobot />, category: 'fast', outputTokenLimit: 16384, supportsReasoningEffort: true, supportsVerbosity: true },
-  { id: 'gpt-5-nano', name: 'GPT-5 Nano', interface: 'gpt-5', icon: <BsRobot />, category: 'fast', outputTokenLimit: 4096, supportsReasoningEffort: true, supportsVerbosity: true },
-  { id: 'gpt-5.1', name: 'GPT-5.1', interface: 'gpt-5', icon: <BsRobot />, category: 'flagship', outputTokenLimit: 16384, supportsReasoningEffort: true, supportsVerbosity: true },
-  { id: 'gpt-5.1-codex', name: 'GPT-5.1 Codex', interface: 'gpt-5', icon: <BsCodeSquare />, category: 'coding', outputTokenLimit: 16384, supportsReasoningEffort: true },
+  // GPT-5 (Estimated Pricing)
+  { id: 'gpt-5-pro', name: 'GPT-5 Pro', interface: 'gpt-5', icon: <BsRobot />, category: 'flagship', outputTokenLimit: 16384, supportsReasoningEffort: true, pricing: { input: 10, output: 30 } },
+  { id: 'gpt-5-codex', name: 'GPT-5 Codex', interface: 'gpt-5', icon: <BsCodeSquare />, category: 'coding', outputTokenLimit: 16384, supportsReasoningEffort: true, pricing: { input: 5, output: 15 } },
+  { id: 'gpt-5-mini', name: 'GPT-5 Mini', interface: 'gpt-5', icon: <BsRobot />, category: 'fast', outputTokenLimit: 16384, supportsReasoningEffort: true, supportsVerbosity: true, pricing: { input: 0.15, output: 0.6 } },
+  { id: 'gpt-5-nano', name: 'GPT-5 Nano', interface: 'gpt-5', icon: <BsRobot />, category: 'fast', outputTokenLimit: 4096, supportsReasoningEffort: true, supportsVerbosity: true, pricing: { input: 0.05, output: 0.2 } },
+  { id: 'gpt-5.1', name: 'GPT-5.1', interface: 'gpt-5', icon: <BsRobot />, category: 'flagship', outputTokenLimit: 16384, supportsReasoningEffort: true, supportsVerbosity: true, pricing: { input: 10, output: 30 } },
+  { id: 'gpt-5.1-codex', name: 'GPT-5.1 Codex', interface: 'gpt-5', icon: <BsCodeSquare />, category: 'coding', outputTokenLimit: 16384, supportsReasoningEffort: true, pricing: { input: 5, output: 15 } },
   
   // GPT-5.2 (Future)
-  { id: 'gpt-5.2-pro', name: 'GPT-5.2 Pro', interface: 'gpt-5', icon: <BsRobot />, category: 'flagship', outputTokenLimit: 16384 },
+  { id: 'gpt-5.2-pro', name: 'GPT-5.2 Pro', interface: 'gpt-5', icon: <BsRobot />, category: 'flagship', outputTokenLimit: 16384, pricing: { input: 10, output: 30 } },
   // { id: 'gpt-5.2-thinking', name: 'GPT-5.2 Thinking', interface: 'gpt-5', icon: <BsRobot />, category: 'reasoning', outputTokenLimit: 32000, supportsThinking: true },
   // { id: 'gpt-5.2-instant', name: 'GPT-5.2 Instant', interface: 'gpt-5', icon: <BsRobot />, category: 'fast', outputTokenLimit: 4096 },
-  { id: 'gpt-5.2', name: 'GPT-5.2', interface: 'gpt-5', icon: <BsRobot />, category: 'flagship', outputTokenLimit: 8192, supportsReasoningEffort: true, supportsVerbosity: true },
+  { id: 'gpt-5.2', name: 'GPT-5.2', interface: 'gpt-5', icon: <BsRobot />, category: 'flagship', outputTokenLimit: 8192, supportsReasoningEffort: true, supportsVerbosity: true, pricing: { input: 5, output: 15 } },
   
-  { id: 'gpt-5', name: 'GPT-5', interface: 'gpt-5', icon: <BsRobot />, category: 'flagship', outputTokenLimit: 8192, supportsReasoningEffort: true, supportsVerbosity: true },
+  { id: 'gpt-5', name: 'GPT-5', interface: 'gpt-5', icon: <BsRobot />, category: 'flagship', outputTokenLimit: 8192, supportsReasoningEffort: true, supportsVerbosity: true, pricing: { input: 5, output: 15 } },
 
   // GPT-4 & 3.5
-  { id: 'gpt-4.1', name: 'GPT-4.1', interface: 'openai-standard', icon: <SiOpenai />, category: 'flagship', outputTokenLimit: 4096 },
-  { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', interface: 'openai-standard', icon: <SiOpenai />, category: 'fast', outputTokenLimit: 16384 },
-  { id: 'gpt-4o', name: 'GPT-4o', interface: 'openai-standard', icon: <SiOpenai />, category: 'flagship', outputTokenLimit: 4096 },
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', interface: 'openai-standard', icon: <SiOpenai />, category: 'fast', outputTokenLimit: 16384 },
-  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', interface: 'openai-standard', icon: <SiOpenai />, category: 'flagship', outputTokenLimit: 4096 },
-  { id: 'gpt-4', name: 'GPT-4', interface: 'openai-standard', icon: <SiOpenai />, category: 'flagship', outputTokenLimit: 4096 },
-  { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', interface: 'openai-standard', icon: <SiOpenai />, category: 'fast', outputTokenLimit: 4096 },
+  { id: 'gpt-4.1', name: 'GPT-4.1', interface: 'openai-standard', icon: <SiOpenai />, category: 'flagship', outputTokenLimit: 4096, pricing: { input: 2.5, output: 10 } },
+  { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', interface: 'openai-standard', icon: <SiOpenai />, category: 'fast', outputTokenLimit: 16384, pricing: { input: 0.15, output: 0.6 } },
+  { id: 'gpt-4.1-mini-2025-04-14', name: 'GPT-4.1 Mini (04-14)', interface: 'openai-standard', icon: <SiOpenai />, category: 'fast', outputTokenLimit: 16384, pricing: { input: 0.15, output: 0.6 } },
+  { id: 'gpt-4o', name: 'GPT-4o', interface: 'openai-standard', icon: <SiOpenai />, category: 'flagship', outputTokenLimit: 4096, pricing: { input: 2.5, output: 10 } },
+  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', interface: 'openai-standard', icon: <SiOpenai />, category: 'fast', outputTokenLimit: 16384, pricing: { input: 0.15, output: 0.6 } },
+  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', interface: 'openai-standard', icon: <SiOpenai />, category: 'flagship', outputTokenLimit: 4096, pricing: { input: 10, output: 30 } },
+  { id: 'gpt-4', name: 'GPT-4', interface: 'openai-standard', icon: <SiOpenai />, category: 'flagship', outputTokenLimit: 4096, pricing: { input: 30, output: 60 } },
+  { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', interface: 'openai-standard', icon: <SiOpenai />, category: 'fast', outputTokenLimit: 4096, pricing: { input: 0.5, output: 1.5 } },
+  { id: 'gpt-3.5-turbo-0125', name: 'GPT-3.5 Turbo (0125)', interface: 'openai-standard', icon: <SiOpenai />, category: 'fast', outputTokenLimit: 4096, pricing: { input: 0.5, output: 1.5 } },
 
   // --- Anthropic Models ---
   // Claude 4 (Opus/Sonnet Future)
   // { id: 'claude-opus-4.5', name: 'Claude Opus 4.5', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 8192, supportsThinking: true },
-  { id: 'claude-opus-4-20250514', name: 'Claude Opus 4', interface: 'claude-opus-4', icon: <BsLightningCharge />, category: 'flagship', outputTokenLimit: 32000, supportsThinking: true },
-  { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', interface: 'claude-opus-4', icon: <BsLightningCharge />, category: 'flagship', outputTokenLimit: 32000, supportsThinking: true },
+  { id: 'claude-opus-4-20250514', name: 'Claude Opus 4', interface: 'claude-opus-4', icon: <BsLightningCharge />, category: 'flagship', outputTokenLimit: 32000, supportsThinking: true, pricing: { input: 15, output: 75 } },
+  { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', interface: 'claude-opus-4', icon: <BsLightningCharge />, category: 'flagship', outputTokenLimit: 32000, supportsThinking: true, pricing: { input: 3, output: 15 } },
 
   // Claude 4.5
-  { id: 'claude-opus-4-5-20251101', name: 'Claude 4.5 Opus', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 64000, supportsThinking: true },
-  { id: 'claude-sonnet-4-5-20250929', name: 'Claude 4.5 Sonnet', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 64000, supportsThinking: true },
-  { id: 'claude-haiku-4-5-20251001', name: 'Claude 4.5 Haiku', interface: 'anthropic', icon: <SiAnthropic />, category: 'fast', outputTokenLimit: 64000, supportsThinking: true },
+  { id: 'claude-opus-4-5-20251101', name: 'Claude 4.5 Opus', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 64000, supportsThinking: true, pricing: { input: 15, output: 75 } },
+  { id: 'claude-sonnet-4-5-20250929', name: 'Claude 4.5 Sonnet', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 64000, supportsThinking: true, pricing: { input: 3, output: 15 } },
+  { id: 'claude-haiku-4-5-20251001', name: 'Claude 4.5 Haiku', interface: 'anthropic', icon: <SiAnthropic />, category: 'fast', outputTokenLimit: 64000, supportsThinking: true, pricing: { input: 0.25, output: 1.25 } },
 
   // Claude 3.7
-  { id: 'claude-3-7-sonnet-20250219', name: 'Claude 3.7 Sonnet', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 64000, supportsThinking: true },
+  { id: 'claude-3-7-sonnet-20250219', name: 'Claude 3.7 Sonnet', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 64000, supportsThinking: true, pricing: { input: 3, output: 15 } },
   
   // Claude 3.5
-  { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', interface: 'anthropic', icon: <SiAnthropic />, category: 'fast', outputTokenLimit: 8192, supportsThinking: false },
+  { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', interface: 'anthropic', icon: <SiAnthropic />, category: 'fast', outputTokenLimit: 8192, supportsThinking: false, pricing: { input: 0.8, output: 4 } },
 
   // Claude 3
-  { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 4096, supportsThinking: false },
-  { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', interface: 'anthropic', icon: <SiAnthropic />, category: 'fast', outputTokenLimit: 4096, supportsThinking: false },
+  { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 4096, supportsThinking: false, pricing: { input: 15, output: 75 } },
+  { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', interface: 'anthropic', icon: <SiAnthropic />, category: 'fast', outputTokenLimit: 4096, supportsThinking: false, pricing: { input: 0.25, output: 1.25 } },
 
   // --- Google Gemini (Native) ---
   // Gemini 3
@@ -172,16 +178,16 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
   // { id: 'models/gemini-3', name: 'Gemini 3', interface: 'gemini-api', icon: <SiGoogle />, category: 'flagship', outputTokenLimit: 8192 },
 
   // Gemini 2.5
-  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', interface: 'gemini-api', icon: <SiGoogle />, category: 'flagship', outputTokenLimit: 8192 },
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192 },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', interface: 'gemini-api', icon: <SiGoogle />, category: 'flagship', outputTokenLimit: 8192, pricing: { input: 1.25, output: 5 } },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0.1, output: 0.4 } },
 
   // Gemini 2.0
-  { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash Exp', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192 },
-  { id: 'gemini-exp-1206', name: 'Gemini Exp 1206', interface: 'gemini-api', icon: <SiGoogle />, category: 'reasoning', outputTokenLimit: 8192 },
+  { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash Exp', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0, output: 0 } },
+  { id: 'gemini-exp-1206', name: 'Gemini Exp 1206', interface: 'gemini-api', icon: <SiGoogle />, category: 'reasoning', outputTokenLimit: 8192, pricing: { input: 0, output: 0 } },
 
   // Gemini 1.5
-  { id: 'gemini-1.5-pro-latest', name: 'Gemini 1.5 Pro (Latest)', interface: 'gemini-api', icon: <SiGoogle />, category: 'flagship', outputTokenLimit: 8192 },
-  { id: 'gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash (Latest)', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192 },
+  { id: 'gemini-1.5-pro-latest', name: 'Gemini 1.5 Pro (Latest)', interface: 'gemini-api', icon: <SiGoogle />, category: 'flagship', outputTokenLimit: 8192, pricing: { input: 1.25, output: 5 } },
+  { id: 'gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash (Latest)', interface: 'gemini-api', icon: <SiGoogle />, category: 'fast', outputTokenLimit: 8192, pricing: { input: 0.1, output: 0.4 } },
 
   // --- OpenRouter Models ---
   // OpenAI
