@@ -147,18 +147,23 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
   // --- Anthropic Models ---
   // Claude 4 (Opus/Sonnet Future)
   // { id: 'claude-opus-4.5', name: 'Claude Opus 4.5', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 8192, supportsThinking: true },
-  { id: 'claude-opus-4-20250514', name: 'Claude Opus 4', interface: 'claude-opus-4', icon: <BsLightningCharge />, category: 'flagship', outputTokenLimit: 4096, supportsThinking: true },
-  { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', interface: 'claude-opus-4', icon: <BsLightningCharge />, category: 'flagship', outputTokenLimit: 8192, supportsThinking: true },
+  { id: 'claude-opus-4-20250514', name: 'Claude Opus 4', interface: 'claude-opus-4', icon: <BsLightningCharge />, category: 'flagship', outputTokenLimit: 32000, supportsThinking: true },
+  { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', interface: 'claude-opus-4', icon: <BsLightningCharge />, category: 'flagship', outputTokenLimit: 32000, supportsThinking: true },
+
+  // Claude 4.5
+  { id: 'claude-opus-4-5-20251101', name: 'Claude 4.5 Opus', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 64000, supportsThinking: true },
+  { id: 'claude-sonnet-4-5-20250929', name: 'Claude 4.5 Sonnet', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 64000, supportsThinking: true },
+  { id: 'claude-haiku-4-5-20251001', name: 'Claude 4.5 Haiku', interface: 'anthropic', icon: <SiAnthropic />, category: 'fast', outputTokenLimit: 64000, supportsThinking: true },
 
   // Claude 3.7
-  { id: 'claude-3-7-sonnet-20250219', name: 'Claude 3.7 Sonnet', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 8192, supportsThinking: true },
+  { id: 'claude-3-7-sonnet-20250219', name: 'Claude 3.7 Sonnet', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 64000, supportsThinking: true },
   
   // Claude 3.5
-  { id: 'claude-3-5-haiku-latest', name: 'Claude 3.5 Haiku (Latest)', interface: 'anthropic', icon: <SiAnthropic />, category: 'fast', outputTokenLimit: 8192 },
+  { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', interface: 'anthropic', icon: <SiAnthropic />, category: 'fast', outputTokenLimit: 8192, supportsThinking: false },
 
   // Claude 3
-  { id: 'claude-3-opus-latest', name: 'Claude 3 Opus (Latest)', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 4096 },
-  { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', interface: 'anthropic', icon: <SiAnthropic />, category: 'fast', outputTokenLimit: 4096 },
+  { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', interface: 'anthropic', icon: <SiAnthropic />, category: 'flagship', outputTokenLimit: 4096, supportsThinking: false },
+  { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', interface: 'anthropic', icon: <SiAnthropic />, category: 'fast', outputTokenLimit: 4096, supportsThinking: false },
 
   // --- Google Gemini (Native) ---
   // Gemini 3

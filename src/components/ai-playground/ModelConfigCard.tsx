@@ -37,7 +37,7 @@ export default function ModelConfigCard({
   const model = AVAILABLE_MODELS.find(m => m.id === modelId);
 
   const isOSeries = modelId.startsWith('o1') || modelId.startsWith('o3') || modelId.startsWith('o4');
-  const isAnthropic = model?.interface === 'anthropic';
+  const isAnthropic = model?.interface === 'anthropic' || model?.interface === 'claude-opus-4';
   const isGemini = model?.interface === 'gemini-api';
   const isOpenAI = model?.interface === 'openai-api' || model?.interface === 'openai-standard' || model?.interface === 'gpt-5';
   
@@ -78,7 +78,7 @@ export default function ModelConfigCard({
                 <input
                   type="range"
                   min="0"
-                  max="2"
+                  max={isAnthropic ? 1 : 2}
                   step="0.1"
                   value={config.temperature}
                   disabled={isThinkingSupported && config.enableThinking}
@@ -98,7 +98,7 @@ export default function ModelConfigCard({
                   type="range"
                   min="1"
                   max={model?.outputTokenLimit || 4096}
-                  step="1"
+                  step={model?.outputTokenLimit && model.outputTokenLimit > 10000 ? 128 : 1}
                   value={config.maxTokens}
                   onChange={(e) => updateConfig({ maxTokens: parseInt(e.target.value) })}
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
@@ -259,10 +259,24 @@ export default function ModelConfigCard({
                   />
                 </div>
                 {config.enableThinking && (
-                  <div>
-                    <label className="block text-[10px] font-medium mb-1 text-gray-700 dark:text-gray-300">
-                      Budget (Tokens)
-                    </label>
+                  <div className="space-y-2">
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300">
+                          Thinking Budget
+                        </label>
+                        <span className="text-[10px] text-gray-500 font-mono">{config.thinkingBudget}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="1"
+                        max={(model?.outputTokenLimit || 4096) - 1}
+                        step={model?.outputTokenLimit && model.outputTokenLimit > 10000 ? 128 : 1}
+                        value={config.thinkingBudget}
+                        onChange={(e) => updateConfig({ thinkingBudget: parseInt(e.target.value) })}
+                        className="w-full h-1.5 bg-brand-200 rounded-lg appearance-none cursor-pointer dark:bg-brand-900/40"
+                      />
+                    </div>
                     <input
                       type="number"
                       value={config.thinkingBudget}

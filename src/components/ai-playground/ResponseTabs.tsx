@@ -49,7 +49,7 @@ export default function ResponseTabs({ content }: ResponseTabsProps) {
       </div>
 
       <div className="min-h-[200px] text-gray-800 dark:text-gray-200">
-        {activeTab === 'rich' && (
+              {activeTab === 'rich' && (
           <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed">
             <ReactMarkdown 
               remarkPlugins={[remarkGfm, remarkBreaks]}

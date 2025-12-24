@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -54,6 +53,7 @@ export default function AiPlaygroundInterface() {
   
   // Response State (keyed by model ID)
   const [responses, setResponses] = useState<Record<string, string>>({});
+  const [isThinking, setIsThinking] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [metrics, setMetrics] = useState<Record<string, { time: number }>>({});
@@ -90,9 +90,9 @@ export default function AiPlaygroundInterface() {
 
           if (isThinkingSupported) {
             specificConfig.enableThinking = true;
-            specificConfig.thinkingBudget = 2048; 
+            specificConfig.thinkingBudget = 4096; 
             // Ensure maxTokens is enough for thinking
-            if (specificConfig.maxTokens < 4096) specificConfig.maxTokens = 8192;
+            if (specificConfig.maxTokens < 8192) specificConfig.maxTokens = 16384;
             specificConfig.temperature = 1.0; 
           } else if (isOSeries) {
             specificConfig.reasoningEffort = 'medium';
@@ -273,7 +273,11 @@ export default function AiPlaygroundInterface() {
                  content = parsed.delta || '';
               } else if (isThisModelAnthropic) {
                  if (parsed.type === 'content_block_delta') {
-                   content = parsed.delta?.text || '';
+                   // Only handle text deltas, silently skip thinking deltas
+                   if (parsed.delta?.type === 'text_delta') {
+                      content = parsed.delta?.text || '';
+                   } 
+                   // thinking_delta is ignored
                  }
               } else if (isThisModelGemini) {
                  if (parsed.candidates?.[0]?.content?.parts?.[0]?.text) {

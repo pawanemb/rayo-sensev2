@@ -20,6 +20,7 @@ const INTERFACE_GROUPS = [
   { id: 'openrouter', name: 'OpenRouter' },
   { id: 'claude-opus-4', name: 'Claude 4' },
   { id: 'gpt-5', name: 'GPT-5' },
+  { id: 'gemini-api', name: 'Gemini' },
 ];
 
 export default function MultiModelSelector({
