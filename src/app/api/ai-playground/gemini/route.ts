@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-  } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
     console.error('[AI Playground Gemini Route] Error:', error);
     const errorMessage = error.message || 'Internal Server Error';
     const status = error.response?.status || 500;

@@ -22,7 +22,6 @@ export default function ResponseDisplay({
   loading,
   error,
   responseTime,
-  wordCount = 0,
   usage,
   cost
 }: ResponseDisplayProps) {

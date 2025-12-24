@@ -7,7 +7,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { IoSettingsOutline } from 'react-icons/io5';
 import { AVAILABLE_MODELS } from '@/lib/constants/models';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface ModelConfig {
   temperature?: number;
   maxTokens?: number;
@@ -19,7 +18,7 @@ interface ModelConfig {
   enableThinking?: boolean;
   thinkingBudget?: number;
   verbosity?: 'low' | 'medium' | 'high';
-  [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
 }
 
 interface ModelConfigCardProps {

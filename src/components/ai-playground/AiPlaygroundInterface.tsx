@@ -57,7 +57,6 @@ export default function AiPlaygroundInterface() {
   
   // Response State (keyed by model ID)
   const [responses, setResponses] = useState<Record<string, string>>({});
-  const [isThinking, setIsThinking] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [metrics, setMetrics] = useState<Record<string, { 
@@ -186,7 +185,6 @@ export default function AiPlaygroundInterface() {
 
       // Check Capabilities
       const isOSeries = modelId.startsWith('o1') || modelId.startsWith('o3') || modelId.startsWith('o4');
-      const isGemini3 = modelId.includes('gemini-3');
       const isThisModelAnthropic = modelInfo.interface === 'anthropic' || modelInfo.interface === 'claude-opus-4';
       const isThisModelGemini = modelInfo.interface === 'gemini-api';
       const isThisModelThinking = modelInfo.supportsThinking ?? (

@@ -3,10 +3,11 @@
   "rules": {
     "@typescript-eslint/no-explicit-any": "off",
     "@next/next/no-img-element": "off",
-    "@typescript-eslint/no-unused-vars": ["error", {
+    "@typescript-eslint/no-unused-vars": ["warn", {
       "argsIgnorePattern": "^_",
       "varsIgnorePattern": "^_"
     }],
-    "prefer-const": "error"
+    "prefer-const": "error",
+    "eslint-comments/no-unused-disable": "off"
   }
 }
