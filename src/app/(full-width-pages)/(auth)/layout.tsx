@@ -79,7 +79,7 @@ export default function AuthLayout({
             </div>
 
             <div className="absolute bottom-8 left-0 w-full text-center text-gray-500 text-sm">
-              © 2025 Rayo. All rights reserved.
+              © 2026 Rayo. All rights reserved.
             </div>
           </div>
         </div>
