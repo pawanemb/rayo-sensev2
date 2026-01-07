@@ -310,31 +310,38 @@ export default function AiPlaygroundInterface() {
                    }
                  }));
               } else if (parsed.type === 'message_start') {
-                 // Anthropic usage
+                 // Anthropic usage (input tokens at start)
                  const usage = parsed.message?.usage;
                  if (usage) {
-                   setMetrics(prev => ({ 
-                     ...prev, 
-                     [modelId]: { 
-                       ...prev[modelId], 
-                       usage: { ...prev[modelId]?.usage, input_tokens: usage.input_tokens, output_tokens: usage.output_tokens || 0 } 
-                     } 
+                   const inputTokens = usage.input_tokens || 0;
+                   setMetrics(prev => ({
+                     ...prev,
+                     [modelId]: {
+                       ...prev[modelId],
+                       usage: { input_tokens: inputTokens, output_tokens: usage.output_tokens || 0 }
+                     }
                    }));
                  }
               } else if (parsed.type === 'message_delta') {
-                 // Anthropic cumulative usage
+                 // Anthropic cumulative usage (output tokens updated at end)
                  const usage = parsed.usage;
                  if (usage) {
-                    setMetrics(prev => ({ 
-                      ...prev, 
-                      [modelId]: { 
-                        ...prev[modelId], 
-                        usage: { 
-                          input_tokens: prev[modelId]?.usage?.input_tokens || 0, 
-                          output_tokens: usage.output_tokens 
-                        } 
-                      } 
-                    }));
+                    const outputTokens = usage.output_tokens || 0;
+                    setMetrics(prev => {
+                      const inputTokens = prev[modelId]?.usage?.input_tokens || 0;
+                      let cost = 0;
+                      if (modelInfo.pricing) {
+                         cost = (inputTokens * modelInfo.pricing.input + outputTokens * modelInfo.pricing.output) / 1000000;
+                      }
+                      return {
+                        ...prev,
+                        [modelId]: {
+                          ...prev[modelId],
+                          usage: { input_tokens: inputTokens, output_tokens: outputTokens },
+                          cost
+                        }
+                      };
+                    });
                  }
               } else if (parsed.type === 'response.output_text.delta') {
                  // O1 / Responses API format
@@ -367,27 +374,41 @@ export default function AiPlaygroundInterface() {
                  // Gemini usage
                  const usage = parsed.usageMetadata;
                  if (usage) {
-                    setMetrics(prev => ({ 
-                      ...prev, 
-                      [modelId]: { 
-                        ...prev[modelId], 
-                        usage: { input_tokens: usage.promptTokenCount, output_tokens: usage.candidatesTokenCount } 
-                      } 
+                    const inputTokens = usage.promptTokenCount || 0;
+                    const outputTokens = usage.candidatesTokenCount || 0;
+                    let cost = 0;
+                    if (modelInfo.pricing) {
+                       cost = (inputTokens * modelInfo.pricing.input + outputTokens * modelInfo.pricing.output) / 1000000;
+                    }
+                    setMetrics(prev => ({
+                      ...prev,
+                      [modelId]: {
+                        ...prev[modelId],
+                        usage: { input_tokens: inputTokens, output_tokens: outputTokens },
+                        cost
+                      }
                     }));
                  }
               } else {
-                 // OpenAI / OpenRouter
+                 // OpenAI / OpenRouter (chat completions format)
                  content = parsed.choices?.[0]?.delta?.content || '';
-                 
+
                  // OpenAI usage (often in last chunk or if stream_options: { include_usage: true })
                  if (parsed.usage) {
                     const usage = parsed.usage;
-                    setMetrics(prev => ({ 
-                      ...prev, 
-                      [modelId]: { 
-                        ...prev[modelId], 
-                        usage: { input_tokens: usage.prompt_tokens, output_tokens: usage.completion_tokens } 
-                      } 
+                    const inputTokens = usage.prompt_tokens || 0;
+                    const outputTokens = usage.completion_tokens || 0;
+                    let cost = 0;
+                    if (modelInfo.pricing) {
+                       cost = (inputTokens * modelInfo.pricing.input + outputTokens * modelInfo.pricing.output) / 1000000;
+                    }
+                    setMetrics(prev => ({
+                      ...prev,
+                      [modelId]: {
+                        ...prev[modelId],
+                        usage: { input_tokens: inputTokens, output_tokens: outputTokens },
+                        cost
+                      }
                     }));
                  }
               }
