@@ -166,7 +166,7 @@ export default function AiPlaygroundInterface() {
     setLoading(prev => ({ ...prev, [modelId]: true }));
     setErrors(prev => ({ ...prev, [modelId]: '' }));
     setResponses(prev => ({ ...prev, [modelId]: '' }));
-    setMetrics(prev => ({ ...prev, [modelId]: { time: 0, usage: undefined, cost: 0 } }));
+    setMetrics(prev => ({ ...prev, [modelId]: { time: 0, usage: undefined, cost: undefined } }));
     
     const startTime = Date.now();
 
@@ -264,18 +264,25 @@ export default function AiPlaygroundInterface() {
 
       const decoder = new TextDecoder();
       let fullContent = '';
+      let buffer = ''; // Buffer for incomplete SSE lines
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+        buffer += chunk;
+
+        // Process complete lines only (lines ending with \n)
+        const lines = buffer.split('\n');
+        // Keep the last incomplete line in the buffer
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            const data = line.slice(6);
+            const data = line.slice(6).trim();
             if (data === '[DONE]') continue;
+            if (!data) continue;
 
             try {
               const parsed = JSON.parse(data);
@@ -284,17 +291,23 @@ export default function AiPlaygroundInterface() {
               if (parsed.type === 'response.completed' && parsed.response?.usage) {
                  // OpenAI v1/responses usage
                  const usage = parsed.response.usage;
+                 const inputTokens = usage.input_tokens || 0;
+                 // For O-series models, output_tokens includes reasoning tokens
+                 // We need to use the total output_tokens for cost calculation
+                 const outputTokens = usage.output_tokens || 0;
+
                  let cost = 0;
                  if (modelInfo.pricing) {
-                    cost = (usage.input_tokens * modelInfo.pricing.input + usage.output_tokens * modelInfo.pricing.output) / 1000000;
+                    cost = (inputTokens * modelInfo.pricing.input + outputTokens * modelInfo.pricing.output) / 1000000;
                  }
-                 setMetrics(prev => ({ 
-                   ...prev, 
-                   [modelId]: { 
-                     ...prev[modelId], 
-                     usage: { input_tokens: usage.input_tokens, output_tokens: usage.output_tokens },
+                 console.log('[AI Playground] Usage received:', { inputTokens, outputTokens, cost, pricing: modelInfo.pricing });
+                 setMetrics(prev => ({
+                   ...prev,
+                   [modelId]: {
+                     ...prev[modelId],
+                     usage: { input_tokens: inputTokens, output_tokens: outputTokens },
                      cost
-                   } 
+                   }
                  }));
               } else if (parsed.type === 'message_start') {
                  // Anthropic usage
@@ -383,9 +396,44 @@ export default function AiPlaygroundInterface() {
                 fullContent += content;
                 setResponses(prev => ({ ...prev, [modelId]: fullContent }));
               }
-            } catch {
-              // Ignore parse errors
+            } catch (parseError) {
+              // Log parse errors for debugging - especially important for response.completed events
+              if (data.includes('response.completed') || data.includes('usage')) {
+                console.warn('[AI Playground] Failed to parse usage data:', data.substring(0, 500), parseError);
+              } else {
+                console.debug('[AI Playground] Parse error for line:', data.substring(0, 100));
+              }
             }
+          }
+        }
+      }
+
+      // Process any remaining data in the buffer
+      if (buffer.trim().startsWith('data: ')) {
+        const data = buffer.trim().slice(6).trim();
+        if (data && data !== '[DONE]') {
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.type === 'response.completed' && parsed.response?.usage) {
+              const usage = parsed.response.usage;
+              const inputTokens = usage.input_tokens || 0;
+              const outputTokens = usage.output_tokens || 0;
+              let cost = 0;
+              if (modelInfo.pricing) {
+                cost = (inputTokens * modelInfo.pricing.input + outputTokens * modelInfo.pricing.output) / 1000000;
+              }
+              console.log('[AI Playground] Usage from buffer:', { inputTokens, outputTokens, cost });
+              setMetrics(prev => ({
+                ...prev,
+                [modelId]: {
+                  ...prev[modelId],
+                  usage: { input_tokens: inputTokens, output_tokens: outputTokens },
+                  cost
+                }
+              }));
+            }
+          } catch {
+            // Ignore buffer parse errors
           }
         }
       }
@@ -393,19 +441,21 @@ export default function AiPlaygroundInterface() {
       const totalTime = (Date.now() - startTime) / 1000;
       setMetrics(prev => {
         const current = prev[modelId];
-        // If we don't have usage yet (e.g. some models might not have reported it in the stream), 
-        // or if cost is still 0 but we have usage, recalculate.
-        let cost = current?.cost || 0;
-        if (current?.usage && modelInfo.pricing && cost === 0) {
-          cost = (current.usage.input_tokens * modelInfo.pricing.input + current.usage.output_tokens * modelInfo.pricing.output) / 1000000;
+        // Calculate cost if we have usage and pricing info
+        let cost: number | undefined = current?.cost;
+        if (current?.usage && modelInfo.pricing) {
+          // Always recalculate to ensure accuracy
+          const recalculatedCost = (current.usage.input_tokens * modelInfo.pricing.input + current.usage.output_tokens * modelInfo.pricing.output) / 1000000;
+          cost = recalculatedCost;
         }
-        return { 
-          ...prev, 
-          [modelId]: { 
-            ...current, 
+        console.log('[AI Playground] Final metrics:', { modelId, time: totalTime, usage: current?.usage, cost });
+        return {
+          ...prev,
+          [modelId]: {
+            ...current,
             time: totalTime,
             cost
-          } 
+          }
         };
       });
 

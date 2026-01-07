@@ -73,9 +73,9 @@ export default function ResponseDisplay({
                   </span>
                 </div>
               )}
-              {cost !== undefined && cost > 0 && (
+              {usage && cost !== undefined && (
                 <span className="font-semibold text-brand-600 dark:text-brand-400 border-r border-gray-200 dark:border-gray-800 pr-3">
-                  ${cost.toFixed(9).replace(/\.?0+$/, '') || '0'}
+                  ${cost > 0 ? cost.toFixed(6).replace(/\.?0+$/, '') : '0'}
                 </span>
               )}
               {responseTime !== undefined && (
