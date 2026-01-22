@@ -122,14 +122,14 @@ export default function UserBlogs({ userId }: UserBlogsProps) {
   const exportToCSV = async () => {
     setIsExporting(true);
     try {
-      // Fetch ALL blogs with project details included
-      const response = await fetch(`/api/users/${userId}/blogs?page=1&limit=999999&includeProjects=true`);
+      // Fetch ALL blogs
+      const response = await fetch(`/api/users/${userId}/blogs?page=1&limit=999999`);
       if (response.ok) {
         const data = await response.json();
         const allBlogs: BlogRecord[] = data.blogs || [];
 
-        // Convert to CSV
-        const headers = ['Blog ID', 'Title', 'Status', 'Word Count', 'Project Name', 'Project URL', 'Created Date'];
+        // Convert to CSV - blog details only
+        const headers = ['Blog ID', 'Title', 'Status', 'Word Count', 'Created Date'];
         const csvContent = [
           headers.join(','),
           ...allBlogs.map((blog: BlogRecord) => [
@@ -137,8 +137,6 @@ export default function UserBlogs({ userId }: UserBlogsProps) {
             `"${(blog.title || '').replace(/"/g, '""')}"`,
             `"${blog.status || 'draft'}"`,
             blog.word_count || 0,
-            `"${(blog.projectName || 'N/A').replace(/"/g, '""')}"`,
-            `"${blog.projectUrl || 'N/A'}"`,
             `"${formatDateTime(blog.created_at)}"`
           ].join(','))
         ].join('\n');
