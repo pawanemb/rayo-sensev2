@@ -143,13 +143,17 @@ export default function UserBlogs({ userId }: UserBlogsProps) {
       const headers = ['Blog ID', 'Title', 'Status', 'Word Count', 'Created Date'];
       const csvContent = [
         headers.join(','),
-        ...allBlogs.map((blog: BlogRecord) => [
-          `"${blog._id}"`,
-          `"${(blog.title || '').replace(/"/g, '""')}"`,
-          `"${blog.status || 'draft'}"`,
-          blog.word_count || 0,
-          `"${formatDateTime(blog.created_at)}"`
-        ].join(','))
+        ...allBlogs.map((blog: BlogRecord) => {
+          // Safely get title as string
+          const title = typeof blog.title === 'string' ? blog.title : String(blog.title || '');
+          return [
+            `"${blog._id}"`,
+            `"${title.replace(/"/g, '""')}"`,
+            `"${blog.status || 'draft'}"`,
+            blog.word_count || 0,
+            `"${formatDateTime(blog.created_at)}"`
+          ].join(',');
+        })
       ].join('\n');
 
       // Download file
