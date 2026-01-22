@@ -124,36 +124,52 @@ export default function UserBlogs({ userId }: UserBlogsProps) {
     try {
       // Fetch ALL blogs
       const response = await fetch(`/api/users/${userId}/blogs?page=1&limit=999999`);
-      if (response.ok) {
-        const data = await response.json();
-        const allBlogs: BlogRecord[] = data.blogs || [];
 
-        // Convert to CSV - blog details only
-        const headers = ['Blog ID', 'Title', 'Status', 'Word Count', 'Created Date'];
-        const csvContent = [
-          headers.join(','),
-          ...allBlogs.map((blog: BlogRecord) => [
-            `"${blog._id}"`,
-            `"${(blog.title || '').replace(/"/g, '""')}"`,
-            `"${blog.status || 'draft'}"`,
-            blog.word_count || 0,
-            `"${formatDateTime(blog.created_at)}"`
-          ].join(','))
-        ].join('\n');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        alert(`Export failed: ${errorData.error || 'Failed to fetch blogs'}`);
+        return;
+      }
 
-        // Download file
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `blogs-${userId}-${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
+      const data = await response.json();
+      const allBlogs: BlogRecord[] = data.blogs || [];
+
+      if (allBlogs.length === 0) {
+        alert('No blogs to export');
+        return;
+      }
+
+      // Convert to CSV - blog details only
+      const headers = ['Blog ID', 'Title', 'Status', 'Word Count', 'Created Date'];
+      const csvContent = [
+        headers.join(','),
+        ...allBlogs.map((blog: BlogRecord) => [
+          `"${blog._id}"`,
+          `"${(blog.title || '').replace(/"/g, '""')}"`,
+          `"${blog.status || 'draft'}"`,
+          blog.word_count || 0,
+          `"${formatDateTime(blog.created_at)}"`
+        ].join(','))
+      ].join('\n');
+
+      // Download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `blogs-${userId}-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      setTimeout(() => {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-      }
+      }, 100);
     } catch (error) {
       console.error('Failed to export blogs:', error);
+      alert('Export failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setIsExporting(false);
     }
