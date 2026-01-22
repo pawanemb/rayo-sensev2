@@ -12,10 +12,11 @@ interface BlogRecord {
   title: string;
   status: string;
   created_at: string;
+  updated_at?: string;
   project_id?: string;
   projectName?: string | null;
   projectUrl?: string | null;
-  word_count?: number;
+  word_count?: number | number[];
 }
 
 export default function UserBlogs({ userId }: UserBlogsProps) {
@@ -140,18 +141,22 @@ export default function UserBlogs({ userId }: UserBlogsProps) {
       }
 
       // Convert to CSV - blog details only
-      const headers = ['Blog ID', 'Title', 'Status', 'Word Count', 'Created Date'];
+      const headers = ['Blog ID', 'Title', 'Word Count', 'Created Date', 'Updated Date'];
       const csvContent = [
         headers.join(','),
         ...allBlogs.map((blog: BlogRecord) => {
           // Safely get title as string
           const title = typeof blog.title === 'string' ? blog.title : String(blog.title || '');
+          // Get word count - if array pick latest (last) value
+          const wordCount = Array.isArray(blog.word_count)
+            ? (blog.word_count[blog.word_count.length - 1] || 0)
+            : (blog.word_count || 0);
           return [
             `"${blog._id}"`,
             `"${title.replace(/"/g, '""')}"`,
-            `"${blog.status || 'draft'}"`,
-            blog.word_count || 0,
-            `"${formatDateTime(blog.created_at)}"`
+            wordCount,
+            `"${formatDateTime(blog.created_at)}"`,
+            `"${formatDateTime(blog.updated_at)}"`
           ].join(',');
         })
       ].join('\n');
