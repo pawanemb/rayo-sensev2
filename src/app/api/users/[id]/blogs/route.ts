@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function GET(
   request: NextRequest,
@@ -38,13 +38,11 @@ export async function GET(
     }));
 
     if (includeProjects) {
-      const supabase = createAdminClient();
-
       // Get unique project IDs
       const projectIds = [...new Set(blogs.map(blog => blog.project_id).filter(Boolean))];
 
       if (projectIds.length > 0) {
-        const { data: projects } = await supabase
+        const { data: projects } = await supabaseAdmin
           .from('projects')
           .select('id, name, url')
           .in('id', projectIds);
