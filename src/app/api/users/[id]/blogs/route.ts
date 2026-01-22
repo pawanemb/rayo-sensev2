@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(
   request: NextRequest,
@@ -8,14 +9,15 @@ export async function GET(
   try {
     const resolvedParams = await params;
     const { searchParams } = new URL(request.url);
-    
+
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '5');
     const skip = (page - 1) * limit;
+    const includeProjects = searchParams.get('includeProjects') === 'true';
 
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB_NAME || 'rayo_db');
-    
+
     // Get total count of blogs for this user
     const totalBlogs = await db.collection('blogs').countDocuments({
       user_id: resolvedParams.id
@@ -29,11 +31,39 @@ export async function GET(
       .limit(limit)
       .toArray();
 
-    return NextResponse.json({ 
-      blogs: blogs.map(blog => ({
-        ...blog,
-        _id: blog._id.toString() // Convert ObjectId to string
-      })),
+    // If includeProjects is true, fetch project details for all blogs
+    let blogsWithProjects = blogs.map(blog => ({
+      ...blog,
+      _id: blog._id.toString()
+    }));
+
+    if (includeProjects) {
+      const supabase = createAdminClient();
+
+      // Get unique project IDs
+      const projectIds = [...new Set(blogs.map(blog => blog.project_id).filter(Boolean))];
+
+      if (projectIds.length > 0) {
+        const { data: projects } = await supabase
+          .from('projects')
+          .select('id, name, url')
+          .in('id', projectIds);
+
+        // Create a map for quick lookup
+        const projectMap = new Map(projects?.map(p => [p.id, p]) || []);
+
+        // Add project details to each blog
+        blogsWithProjects = blogs.map(blog => ({
+          ...blog,
+          _id: blog._id.toString(),
+          projectName: blog.project_id ? projectMap.get(blog.project_id)?.name || null : null,
+          projectUrl: blog.project_id ? projectMap.get(blog.project_id)?.url || null : null
+        }));
+      }
+    }
+
+    return NextResponse.json({
+      blogs: blogsWithProjects,
       totalBlogs,
       currentPage: page,
       totalPages: Math.ceil(totalBlogs / limit)
