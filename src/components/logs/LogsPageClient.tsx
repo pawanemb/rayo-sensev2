@@ -1578,7 +1578,6 @@ export default function LogsPageClient() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div className="relative h-5 w-5 overflow-hidden rounded flex-shrink-0">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(selectedTask.domain)}&sz=32`}
                               alt=""

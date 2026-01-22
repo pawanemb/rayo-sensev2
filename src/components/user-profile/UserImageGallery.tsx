@@ -208,7 +208,6 @@ export default function UserImageGallery({ userId }: UserImageGalleryProps) {
                       {image.project && (
                         <div className="flex items-center gap-2">
                           <div className="relative h-6 w-6 flex-shrink-0 overflow-hidden rounded border border-gray-100 dark:border-gray-700">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={`https://www.google.com/s2/favicons?domain=${new URL(image.project.url).hostname}&sz=64`}
                               alt={image.project.name}
@@ -322,7 +321,6 @@ export default function UserImageGallery({ userId }: UserImageGalleryProps) {
                     {image.project && (
                       <div className="flex items-center gap-2">
                         <div className="relative h-5 w-5 flex-shrink-0 overflow-hidden rounded border border-gray-100 dark:border-gray-700">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={`https://www.google.com/s2/favicons?domain=${new URL(image.project.url).hostname}&sz=64`}
                             alt={image.project.name}

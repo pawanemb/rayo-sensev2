@@ -298,7 +298,6 @@ export default function UserUsage({ userId }: UserUsageProps) {
                       {record.projects ? (
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 min-w-0">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img 
                               src={`https://www.google.com/s2/favicons?domain=${new URL(record.projects.url).hostname}&sz=16`}
                               alt="" 

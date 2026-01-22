@@ -137,7 +137,6 @@ export default function ProjectInformation({
         <div className="flex gap-4">
           {/* Project Favicon/Icon */}
           <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 border-gray-100 dark:border-gray-700">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(projectData.url)}&sz=64`}
               alt={projectData.name}

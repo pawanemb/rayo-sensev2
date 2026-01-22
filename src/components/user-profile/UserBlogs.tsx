@@ -241,7 +241,6 @@ export default function UserBlogs({ userId }: UserBlogsProps) {
                         </p>
                         {blog.projectName && blog.projectUrl && (
                           <div className="flex items-center gap-2 mt-1 min-w-0">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img 
                               src={`https://www.google.com/s2/favicons?domain=${new URL(blog.projectUrl).hostname}&sz=16`}
                               alt="" 

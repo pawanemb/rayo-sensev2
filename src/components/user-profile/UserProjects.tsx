@@ -250,7 +250,6 @@ export default function UserProjects({ userId, projects, totalProjects = 0 }: Us
                     >
                       <td className="py-3">
                         <div className="flex items-start gap-3">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img 
                             src={faviconUrl} 
                             alt="" 
