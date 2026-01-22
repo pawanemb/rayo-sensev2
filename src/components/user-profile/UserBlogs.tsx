@@ -25,6 +25,7 @@ export default function UserBlogs({ userId }: UserBlogsProps) {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const blogsPerPage = 5;
 
   const fetchBlogs = async (page: number = 1) => {
@@ -118,15 +119,68 @@ export default function UserBlogs({ userId }: UserBlogsProps) {
     fetchBlogs(page);
   };
 
+  const exportToCSV = async () => {
+    setIsExporting(true);
+    try {
+      // Fetch ALL blogs with project details included
+      const response = await fetch(`/api/users/${userId}/blogs?page=1&limit=999999&includeProjects=true`);
+      if (response.ok) {
+        const data = await response.json();
+        const allBlogs: BlogRecord[] = data.blogs || [];
+
+        // Convert to CSV
+        const headers = ['Blog ID', 'Title', 'Status', 'Word Count', 'Project Name', 'Project URL', 'Created Date'];
+        const csvContent = [
+          headers.join(','),
+          ...allBlogs.map((blog: BlogRecord) => [
+            `"${blog._id}"`,
+            `"${(blog.title || '').replace(/"/g, '""')}"`,
+            `"${blog.status || 'draft'}"`,
+            blog.word_count || 0,
+            `"${(blog.projectName || 'N/A').replace(/"/g, '""')}"`,
+            `"${blog.projectUrl || 'N/A'}"`,
+            `"${formatDateTime(blog.created_at)}"`
+          ].join(','))
+        ].join('\n');
+
+        // Download file
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `blogs-${userId}-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Failed to export blogs:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div className="mb-6 flex items-center gap-3">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Blog Posts
-        </h2>
-        <span className="inline-flex items-center rounded-full bg-brand-100 px-3 py-1 text-sm font-medium text-brand-700 dark:bg-brand-900/30 dark:text-brand-400">
-          {totalBlogs} {totalBlogs === 1 ? 'Post' : 'Posts'}
-        </span>
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Blog Posts
+          </h2>
+          <span className="inline-flex items-center rounded-full bg-brand-100 px-3 py-1 text-sm font-medium text-brand-700 dark:bg-brand-900/30 dark:text-brand-400">
+            {totalBlogs} {totalBlogs === 1 ? 'Post' : 'Posts'}
+          </span>
+        </div>
+        {!isLoading && blogs.length > 0 && (
+          <button
+            onClick={exportToCSV}
+            disabled={isExporting}
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isExporting ? 'Exporting...' : 'Export All to CSV'}
+          </button>
+        )}
       </div>
 
       {isLoading ? (
